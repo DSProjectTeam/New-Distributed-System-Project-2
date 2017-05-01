@@ -52,6 +52,7 @@ public class Client {
 			hasDebugOption = false;
 			JSONObject userInput = handleClientInput(args);
 			StopWatch s = new StopWatch();
+			StopWatch swatch = new StopWatch();
 			//set socket to connect to.
 			Socket socket = new Socket(host,port);
 			
@@ -69,24 +70,19 @@ public class Client {
 			DataInputStream in = new DataInputStream(socket.getInputStream());
 			switch(commandType){
 			case "-subscribe": 
-				Scanner scanner = new Scanner(System.in);
-//				String whetherEnter = scanner.nextLine();
-//				char character = whetherEnter.charAt(1);
-//				int intEnter = (int) character;
-				System.out.println("waiting enter");
+				s.start();
 				while(true){
-					System.out.println("waiting enter");
-					String whetherEnter = scanner.nextLine();
-					if (whetherEnter.length()==0){
-						System.out.println("finally you come");
-						break;
-					}
-					else if(in.available()>0){	
+					//when a JSON messages returned, reset and restart timer.
+					if(in.available()>0){
 						String responseMessage = in.readUTF();
 						handleServerResponse(userInput, responseMessage, in);
+						s.reset();
+						s.start();
 					}
-				}	
-				
+					if(s.getTime()>1300){
+						break;
+					}
+				}
 				break;
 			default:
 				//start timer, when over 1.3 second passed after the last JSON message was received, close socket.
