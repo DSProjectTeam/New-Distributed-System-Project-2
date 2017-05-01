@@ -1,0 +1,14 @@
+#Fat Jar Configuration File
+#Fri Apr 28 12:08:52 AEST 2017
+onejar.license.required=false
+manifest.classpath=
+manifest.removesigners=true
+onejar.checkbox=true
+jarname=ezshare.jar
+manifest.mergeall=true
+manifest.mainclass=Client
+manifest.file=<createnew>
+jarname.isextern=false
+onejar.expand=
+excludes=
+includes=
