@@ -12,7 +12,7 @@ public class ConstantEnum {
 	public enum CommandArgument {
 		channel, description, host, name, owner, port, secret, servers,
 		tags, uri, advertisedhostname, connectionintervallimit, exchangeinterval, 
-		serect, resourceTemplate, errorMessage, relay, ezserver, serverList, resourceSize;
+		serect, resourceTemplate, errorMessage, relay, ezserver, serverList, resourceSize, id;
 	}
 	
 

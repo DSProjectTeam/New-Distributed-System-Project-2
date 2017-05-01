@@ -5,6 +5,7 @@ import java.io.RandomAccessFile;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.Arrays;
+import java.util.Scanner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -34,9 +35,9 @@ import com.google.gson.JsonParser;
  */
 public class Client {
 	//for convenience, ip address is also shown as "host" here.
-//	public static String host = "sunrise.cis.unimelb.edu.au";
+	public static String host = "sunrise.cis.unimelb.edu.au";
 	public static String host2 = "192.168.1.110";
-	public static String host = "10.12.187.20";
+//	public static String host = "10.12.187.20";
 	public static int port = 3781;
 	public static String commandType;
 	public static boolean hasDebugOption;
@@ -66,20 +67,47 @@ public class Client {
 			}
 			
 			DataInputStream in = new DataInputStream(socket.getInputStream());
-			//start timer, when over 1.3 second passed after the last JSON message was received, close socket.
-			s.start();
-			while(true){
-				if(s.getTime()>1300){
-					break;
+			switch(commandType){
+			case "-subscribe": 
+				Scanner scanner = new Scanner(System.in);
+//				String whetherEnter = scanner.nextLine();
+//				char character = whetherEnter.charAt(1);
+//				int intEnter = (int) character;
+				System.out.println("waiting enter");
+				while(true){
+					System.out.println("waiting enter");
+					String whetherEnter = scanner.nextLine();
+					if (whetherEnter.length()==0){
+						System.out.println("finally you come");
+						break;
+					}
+					else if(in.available()>0){	
+						String responseMessage = in.readUTF();
+						handleServerResponse(userInput, responseMessage, in);
+					}
+				}	
+				
+				break;
+			default:
+				//start timer, when over 1.3 second passed after the last JSON message was received, close socket.
+				s.start();
+				while(true){
+					//when a JSON messages returned, reset and restart timer.
+					if(in.available()>0){
+						String responseMessage = in.readUTF();
+						handleServerResponse(userInput, responseMessage, in);
+						s.reset();
+						s.start();
+					}
+					if(s.getTime()>1300){
+						break;
+					}
 				}
-				//when a JSON messages returned, reset and restart timer.
-				if(in.available()>0){
-					String responseMessage = in.readUTF();
-					handleServerResponse(userInput, responseMessage, in);
-					s.reset();
-					s.start();
-				}
-			}	
+				break;
+			
+			
+			}
+			
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -94,7 +122,7 @@ public class Client {
 	public static JSONObject handleClientInput(String[] args){
 		for(int i=0;i<args.length;i++){
 			if (args[i].equals("-publish")||args[i].equals("-remove")||args[i].equals("-share")||
-					args[i].equals("-query")||args[i].equals("-fetch")||args[i].equals("-exchange")){
+					args[i].equals("-query")||args[i].equals("-fetch")||args[i].equals("-exchange")||args[i].equals("-subscribe")){
 				//extract the command type, so we still remember the command type when handling response.
 				commandType = args[i];
 				//insert "-command" at args[i] for better use options
@@ -131,6 +159,7 @@ public class Client {
 	    String secret = "";
 	    boolean relay = true;
 	    String serversAll = "";
+	    String id = "";
 	
 	    Options options = new Options();
 	    options.addOption("command",true,"input command"); 
@@ -147,6 +176,7 @@ public class Client {
 	    options.addOption("debug",true, "input debug");
 	    options.addOption("host",true, "input host");
 	    options.addOption("port",true, "input port");
+	    options.addOption("id",true, "id");
 	    
 	    CommandLineParser parser = new DefaultParser();
 	    CommandLine cmd = null;
@@ -245,6 +275,10 @@ public class Client {
 		       hasDebugOption = true;
 		   }   
 	    
+	    if(cmd.hasOption("id")){
+		       id = cmd.getOptionValue("id");
+		   }
+	    
 	    if(cmd.hasOption("command")){
 	        command = cmd.getOptionValue("command");
 	        switch (command){
@@ -259,7 +293,7 @@ public class Client {
 							userinputTemp.put(ConstantEnum.CommandArgument.secret.name(),secret);
 							break;
 	        case "-query":	userinputTemp.put(ConstantEnum.CommandType.command.name(),"QUERY");
-	        				userinputTemp.put(ConstantEnum.CommandArgument.relay.name(),relay); 
+	        					userinputTemp.put(ConstantEnum.CommandArgument.relay.name(),relay); 
 							userinputTemp.put(ConstantEnum.CommandArgument.resourceTemplate.name(),resource); 
 							/*resource & rsourceTemplate are with different names but in same format, so
 							1 JSONObject 'resource' is used as their format*/
@@ -270,6 +304,10 @@ public class Client {
 	       						//serverArray has been put before, so here we just put command 	        					
 	        case "-exchange":	userinputTemp.put(ConstantEnum.CommandType.command.name(),"EXCHANGE");	
 	       						break;
+	        case "-subscribe":	userinputTemp.put(ConstantEnum.CommandType.command.name(),"SUBSCRIBE");
+								userinputTemp.put(ConstantEnum.CommandArgument.relay.name(),relay); 
+								userinputTemp.put(ConstantEnum.CommandArgument.id.name(),id); 
+								userinputTemp.put(ConstantEnum.CommandArgument.resourceTemplate.name(),resource); 
 	        default: break;	
 	        }
 	    }
@@ -311,18 +349,17 @@ public class Client {
 			case "-remove":
 			case "-share":
 			case "-exchange":
-				System.out.println(show);
-				break;
 			case "-query":
-				System.out.println(show);
+				System.out.println("response received from server:\n"+show);
 				break;
 			case "-fetch":
-				System.out.println(show);
+				System.out.println("response received from server:\n"+show);
 				handleDownload(serverResponse,in);
 				break;
+			case "-subscribe":
 			/*commandType remains "", and the pair {"command",""} was put into a JSONObject and sent to server.
 				So here we just print out the error message returned from server. no need to handle empty command case*/
-			default: System.out.println("response received from server: "+serverResponse.toJSONString());
+			default: System.out.println("response received from server:\n"+serverResponse.toJSONString());
 				break;
 			}
 

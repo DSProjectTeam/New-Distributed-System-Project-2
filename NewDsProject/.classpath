@@ -3,11 +3,11 @@
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.8"/>
 	<classpathentry kind="lib" path="json-simple-1.1.1.jar"/>
-	<classpathentry kind="lib" path="C:/Workspace/NewDsProject/NewDsProject/commons-cli-1.4.jar"/>
-	<classpathentry kind="lib" path="C:/Workspace/NewDsProject/NewDsProject/commons-lang3-3.5.jar"/>
-	<classpathentry kind="lib" path="C:/Workspace/NewDsProject/NewDsProject/gson-2.6.2.jar"/>
-	<classpathentry kind="lib" path="C:/Workspace/NewDsProject/NewDsProject/java-json.jar"/>
-	<classpathentry kind="lib" path="C:/Workspace/NewDsProject/NewDsProject/json-20160810.jar"/>
-	<classpathentry kind="lib" path="C:/Workspace/NewDsProject/NewDsProject/json-simple-1.1.1.jar"/>
+	<classpathentry kind="lib" path="/Users/zizheruan/OneDrive - The University of Melbourne/Distributed System/Project 2/New-Distributed-System-Project-2/NewDsProject/commons-cli-1.4.jar"/>
+	<classpathentry kind="lib" path="/Users/zizheruan/OneDrive - The University of Melbourne/Distributed System/Project 2/New-Distributed-System-Project-2/NewDsProject/commons-lang3-3.5.jar"/>
+	<classpathentry kind="lib" path="/Users/zizheruan/OneDrive - The University of Melbourne/Distributed System/Project 2/New-Distributed-System-Project-2/NewDsProject/gson-2.6.2.jar"/>
+	<classpathentry kind="lib" path="/Users/zizheruan/OneDrive - The University of Melbourne/Distributed System/Project 2/New-Distributed-System-Project-2/NewDsProject/java-json.jar"/>
+	<classpathentry kind="lib" path="/Users/zizheruan/OneDrive - The University of Melbourne/Distributed System/Project 2/New-Distributed-System-Project-2/NewDsProject/json-20160810.jar"/>
+	<classpathentry kind="lib" path="/Users/zizheruan/OneDrive - The University of Melbourne/Distributed System/Project 2/New-Distributed-System-Project-2/NewDsProject/json-simple-1.1.1.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
