@@ -553,6 +553,247 @@ public class ServerHandler {
 		return queryReturn;
 	}
 	
+	//----------------------------------------below copied and edited by zizhe--------------------------------------------
+	/**
+	 * This method creates the JSON objects to be returned to client, in response to Subscribe command.
+	 * @param id
+	 * @param name_query
+	 * @param tags_query
+	 * @param description_query
+	 * @param uri_query
+	 * @param channel_query
+	 * @param owner_query
+	 * @param relay
+	 * @param resources
+	 * @param serverSocket
+	 * @param hostName
+	 * @return the JSON object to be returned to client
+	 */
+	public synchronized static QueryReturn handlingSubscribe(String id, String name_query,String[] tags_query,
+			String description_query, String uri_query,String channel_query, 
+			String owner_query, boolean relay,HashMap<String, Resource> resources, ServerSocket serverSocket,String hostName){
+		/**用来存放满足template的resource*/
+		ArrayList<Resource> matchResourceSet = new ArrayList<Resource>();
+		String errorMessage;
+		String response;
+		org.json.JSONArray returnArray = new org.json.JSONArray();
+		JSONArray returnArray1 = new JSONArray();	
+		ArrayList<JSONObject> returnList = new ArrayList<>();
+		QueryReturn queryReturn;
+		JSONObject serverResponse = new JSONObject();
+		
+
+		/**Regexp for filePath*/
+		String filePathPattern = "((\\w+\\/)+)+(\\w+.\\w+)";
+		/**Regexp for invalid resource contains whitespace or /o */
+		String invalidString = "(^\\s.+\\s$)|((\\\\0)+)";
+		
+		
+		/**invalid resource contains whitespace or \o */
+		boolean invalidTag = false;
+		for(String str: tags_query){
+			if(Pattern.matches(invalidString, str)){
+				invalidTag = true;
+			}
+		}
+		
+		boolean invalidResourceValue = Pattern.matches(invalidString, name_query)||Pattern.matches(invalidString, channel_query)||
+				Pattern.matches(invalidString, description_query)||Pattern.matches(invalidString, uri_query)||
+				Pattern.matches(invalidString, owner_query)||invalidTag;
+		//System.out.println("querying");
+		
+		boolean hasMacthResource = false;
+		do{
+			if(invalidResourceValue||owner_query.equals("*")){
+				errorMessage = "invalid resourceTemplate";
+				response = "error";
+				serverResponse.put(ConstantEnum.CommandType.response.name(),response);
+				serverResponse.put(ConstantEnum.CommandArgument.errorMessage.name(), errorMessage);
+				queryReturn = new QueryReturn(serverResponse);
+			}else{
+				
+						//**tagIncluded等于true如果所有template标签包含在候选资源的tags中*//*
+						
+					
+					/** for query like -query with no parameter*/
+					if(channel_query.equals("")&& owner_query.equals("") && uri_query.equals("") && name_query.equals("")
+							&& description_query.equals("")&&tags_query[0].equals("")){
+						ArrayList<Resource> allResource = new ArrayList<Resource>();
+						if(!resources.isEmpty()){
+							JSONObject returnSize = new JSONObject();
+							for(Map.Entry<String, Resource> x:resources.entrySet()){
+								allResource.add(x.getValue());
+							}
+							
+							serverResponse.put(ConstantEnum.CommandType.response, "success");
+							serverResponse.put(ConstantEnum.CommandArgument.id, id);
+							/*returnArray.put(serverResponse);*/
+							
+							/*returnArray1.add(serverResponse);*/
+							returnList.add(serverResponse);
+							for(Resource resourceTemp: allResource){
+								
+								JSONObject MatchResouce = new JSONObject();
+								MatchResouce.put(ConstantEnum.CommandArgument.name.name(), resourceTemp.name);
+								JSONArray tagsArray = new JSONArray();
+								for (String tag: resourceTemp.tag){
+									tagsArray.add(tag);
+								}
+								MatchResouce.put(ConstantEnum.CommandArgument.tags.name(), tagsArray);
+								MatchResouce.put(ConstantEnum.CommandArgument.description.name(), resourceTemp.description);
+								MatchResouce.put(ConstantEnum.CommandArgument.uri.name(), resourceTemp.URI);
+								MatchResouce.put(ConstantEnum.CommandArgument.channel.name(), resourceTemp.channel);
+								
+								/**if owner not "", replace it with * */
+								if(resourceTemp.owner.equals("")){
+									MatchResouce.put(ConstantEnum.CommandArgument.owner.name(), resourceTemp.owner);
+								}else{
+									MatchResouce.put(ConstantEnum.CommandArgument.owner.name(), "*");
+								}
+								
+								Integer ezport = serverSocket.getLocalPort();
+								/*String ezserver = serverSocket.getInetAddress().toString()+":"+ezport.toString();*/
+								String ezserver = hostName+":"+ezport.toString();
+								MatchResouce.put(ConstantEnum.CommandArgument.ezserver.name(), ezserver);
+								
+								/*returnArray1.add(MatchResouce);*/
+								returnList.add(MatchResouce);
+								
+							}
+							returnSize.put(ConstantEnum.CommandType.resultSize, allResource.size());
+							
+							
+							/*returnArray1.add(returnSize);*/		
+							returnList.add(returnSize);							
+							
+							/*queryReturn = new QueryReturn(returnArray1);*/
+							queryReturn = new QueryReturn(returnList); 
+							hasMacthResource = true;
+						}else{
+							errorMessage = "no resource in store";
+							response = "error";
+							serverResponse.put(ConstantEnum.CommandType.response.name(),response);
+							serverResponse.put(ConstantEnum.CommandArgument.errorMessage.name(), errorMessage);
+							queryReturn = new QueryReturn(serverResponse);
+						}
+						
+					}else{
+						for(Resource resource : resources.values()){
+							
+							/**owner or URI not ""*/ 
+							//&& tagIncluded
+							//channel is working
+							//caution: tags name
+							//String a = (b ==null) ? true : false ;
+						boolean channelMatch = (channel_query.equals(""))? true : channel_query.equals(resource.channel);
+						boolean ownerMatch = (owner_query.equals("")) ? true: owner_query.equals(resource.owner);
+						boolean uriMatch = (uri_query.equals("")) ?  true : uri_query.equals(resource.URI) ;
+						
+						boolean tagIncluded;
+						
+						
+						if(tags_query[0].equals("")){
+							tagIncluded = true;
+						}else{
+							if (!resource.tag[0].equals("")) {
+								int tagLength = tags_query.length;
+								int aaa = resource.tag.length;
+								int tagCount=0;
+								for(int i = 0; i<tagLength; i++){
+									for(int j = 0; j<aaa; j++){
+										if(tags_query[i].equals(resource.tag[j])){									
+											tagCount++;
+										}
+									}
+								}
+								if (tagCount==tagLength) {
+									tagIncluded = true;
+								} else {
+									tagIncluded = false;
+								}
+							}else{
+								tagIncluded = true;
+							}
+						}
+						
+						if((channelMatch&& tagIncluded&& ownerMatch && uriMatch && ( (!name_query.equals("") && resource.name.contains(name_query))|| 
+								(!description_query.equals("") && resource.description.contains(channel_query) )|| 
+								(name_query.equals("")&&description_query.equals(""))))){
+							System.out.println("match");
+							
+							/**put the match results into the MatchResourceSet*/
+							matchResourceSet.add(resource);
+						}
+						
+						}
+						if(!matchResourceSet.isEmpty()){
+							Integer size =1;							
+							response = "success";							
+							serverResponse.put(ConstantEnum.CommandType.response.name(), response);
+							
+							
+							/*returnArray1.add(serverResponse);*/
+							returnList.add(serverResponse);
+							
+							JSONObject returnSize = new JSONObject();
+							for(Resource resouce: matchResourceSet){
+								JSONObject MatchResouce = new JSONObject();
+								
+								MatchResouce.put(ConstantEnum.CommandArgument.name.name(), resouce.name);
+								JSONArray tagsArray = new JSONArray();
+								for (String tag: resouce.tag){
+									tagsArray.add(tag);
+								}
+								MatchResouce.put(ConstantEnum.CommandArgument.tags.name(), tagsArray);
+								MatchResouce.put(ConstantEnum.CommandArgument.description.name(), resouce.description);
+								MatchResouce.put(ConstantEnum.CommandArgument.uri.name(), resouce.URI);
+								MatchResouce.put(ConstantEnum.CommandArgument.channel.name(), resouce.channel);
+								
+								/**if owner not "", replace it with * */
+								if(resouce.owner.equals("")){
+									MatchResouce.put(ConstantEnum.CommandArgument.owner.name(), "");
+								}else{
+									MatchResouce.put(ConstantEnum.CommandArgument.owner.name(), "*");
+								}
+								
+								Integer ezport = serverSocket.getLocalPort();
+	
+								String ezserver = hostName+":"+ezport.toString();
+								MatchResouce.put(ConstantEnum.CommandArgument.ezserver.name(), ezserver);
+								
+								/*returnArray1.add(MatchResouce);*/
+								returnList.add(MatchResouce);
+							}
+							//serverResponse.put(ConstantEnum.CommandType.resultSize, matchResourceSet.size());
+							
+							returnSize.put(ConstantEnum.CommandType.resultSize, matchResourceSet.size());
+							
+							/*returnArray1.add(returnSize);*/
+							returnList.add(returnSize);
+							/*queryReturn = new QueryReturn(returnArray1);*/
+							queryReturn = new QueryReturn(returnList);
+							
+							hasMacthResource = true;
+						}else{							
+							errorMessage = "missing resourceTemplate";
+							response = "error";
+							serverResponse.put(ConstantEnum.CommandType.response.name(),response);
+							serverResponse.put(ConstantEnum.CommandArgument.errorMessage.name(), errorMessage);
+							queryReturn = new QueryReturn(serverResponse);
+						}
+						
+					}
+					
+						
+				} 
+					
+				
+			
+		}while(queryReturn==null);
+		return queryReturn;
+	}
+	//----------------------------------------above copied and edited by zizhe--------------------------------------------
+	
 	/**
 	 * This method creates the JSON object to be returned to client, in response to Exchange command.
 	 * @param serverList
@@ -720,6 +961,130 @@ public class ServerHandler {
 				return otherReturn;
 			}
 	
-
+//////////////////////////////////////////////////below copied and edited by zizhe/////////////////////////////////////////////
+	/**
+	 * This method creates the JSON object to be returned to client, in response to Query command with Relay field set as TRUE.
+	 * @param inputMessage
+	 * @param resources
+	 * @param serverSocket
+	 * @param serverList
+	 * @param hasDebugOption
+	 * @return the JSON object to be returned to client
+	 */
+	public synchronized static QueryData handlingSubscribeWithRelay(String inputMessage,HashMap<String, Resource> resources, 
+			ServerSocket serverSocket, ArrayList<String> serverList, boolean hasDebugOption){
+			JSONObject inputQuerry = new JSONObject();
+			ArrayList<JSONObject> arrayList = new ArrayList<>();
+			QueryData otherReturn = new QueryData();
+			int totalOtehrResSize = 0;
+			boolean hasMatchServer = false;
+			/**parse input query from the client*/
+			try {
+				JSONParser parser = new JSONParser();
+				inputQuerry = (JSONObject) parser.parse(inputMessage);
+				
+			} catch (org.json.simple.parser.ParseException e) {
+				e.printStackTrace();
+			}
+			
+			/**replace owner, channel with"" and set relay with true, then forward query*/
+			
+			inputQuerry.put("channel", "");////////////////////////////////need fix/////////////////////////////////////////
+			/*inputQuerry.put("owner", "");*/
+			inputQuerry.put("relay", "false");
+					
+			/**a list to store success information from other servers*/
+			ArrayList<JSONObject> successOutcome = new ArrayList<>();
+			ArrayList<JSONObject> errorOutcome = new ArrayList<>();			
+			
+			if(!serverList.isEmpty()){
+			
+					for(String server: serverList){
+						
+						String[] hostAndPortTemp = server.split(":");
+						String tempIp = hostAndPortTemp[0];
+						Integer tempPort = Integer.parseInt(hostAndPortTemp[1]);
+						try {
+							/**not query server itself while relay is true*/
+							if(!InetAddress.getLocalHost().getHostAddress().equals(tempIp)){
+								try {
+									Socket otherServer = new Socket(tempIp, tempPort);
+									DataInputStream inputStream = new DataInputStream(otherServer.getInputStream());
+									DataOutputStream outputStream = new DataOutputStream(otherServer.getOutputStream());
+									outputStream.writeUTF(inputQuerry.toJSONString());
+									outputStream.flush();
+									if(hasDebugOption){
+										System.out.println("SENT: "+inputQuerry.toJSONString());
+									}
+									System.out.println("query sent to other server");
+									StopWatch s = new StopWatch();
+									s.start();
+									while(true){
+										if(inputStream.available()>0){
+											String otherServerResponse = inputStream.readUTF();
+											JSONParser parser2 = new JSONParser();
+											
+											JSONObject otherResponse = new JSONObject();
+											otherResponse = (JSONObject)parser2.parse(otherServerResponse);
+											/*System.out.println(otherResponse.toJSONString());*/
+											JSONArray  jsonArray = new JSONArray();
+											
+											arrayList.add((JSONObject)parser2.parse(otherServerResponse));
+											
+											if(otherResponse.containsKey("resultSize")||otherResponse.containsKey("errorMessage")){
+												break;
+											}
+											
+										}
+										/**other server connected but no response*/
+										if(s.getTime()>500){
+											s.stop();
+											return otherReturn;
+										}
+									}
+									
+										if (arrayList.get(0).get("response").equals("success")) {
+											hasMatchServer =true;
+											int size = arrayList.size();
+											totalOtehrResSize = totalOtehrResSize+size;
+											
+											for(int i =1; i<size-1;i++){
+												successOutcome.add(arrayList.get(i));
+												
+											}
+											otherReturn = new QueryData(true, successOutcome);
+											
+											
+										}else{
+											int size = arrayList.size();
+											for(int i = 0;i<size;i++){
+												errorOutcome.add(arrayList.get(i));
+											}
+											otherReturn = new QueryData(false, errorOutcome);
+											
+										}	
+									
+										
+										
+											
+													
+										} catch (Exception e) {
+											
+											e.printStackTrace();
+										}
+							}
+								
+							
+						} catch (UnknownHostException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+						}
+				} 
+				return otherReturn;
+			}
+	
+//////////////////////////////////////////////////above copied and edited by zizhe/////////////////////////////////////////////
+	
 
 }

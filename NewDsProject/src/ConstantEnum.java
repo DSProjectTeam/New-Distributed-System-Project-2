@@ -6,7 +6,8 @@
 public class ConstantEnum {
 	
 	public enum CommandType {
-		debug, exchange, fetch, publish, query, remove, share, response, resource,resultSize,command;
+		debug, exchange, fetch, publish, query, remove, share, response, resource,resultSize,
+		 subscribe, unsubscribe, command;
 	}
 	
 	public enum CommandArgument {

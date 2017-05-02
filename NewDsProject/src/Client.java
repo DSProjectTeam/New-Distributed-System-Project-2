@@ -89,6 +89,19 @@ public class Client {
 						    System.out.println(commandType+" to "+host+":"+port);
 							System.out.println("SENT: "+unsubscribeMessage.toJSONString());
 						}
+						swatch.start();
+						while(true){
+							/*receive the last message of total resultSize and close. 
+							If not received in 1.3s, disconnect.*/
+							if(in.available()>0){
+								String responseMessage = in.readUTF();
+								handleServerResponse(userInput, responseMessage, in);
+								break;
+							}
+							if(swatch.getTime()>1300){
+								break;
+							}
+						}
 						break;
 					}
 					//keep open to receive asynchronous responses from server
@@ -367,6 +380,8 @@ public class Client {
 				handleDownload(serverResponse,in);
 				break;
 			case "-subscribe":
+				System.out.println("response received from server:\n"+show);
+				break;
 			/*commandType remains "", and the pair {"command",""} was put into a JSONObject and sent to server.
 				So here we just print out the error message returned from server. no need to handle empty command case*/
 			default: System.out.println("response received from server:\n"+serverResponse.toJSONString());
