@@ -1081,6 +1081,27 @@ public class ServerHandler {
 			}
 	
 //////////////////////////////////////////////////above copied and edited by zizhe/////////////////////////////////////////////
-	
+	public synchronized static JSONObject handlingUnsubscribe(ArrayList<String> subscriberList, String id){
+			JSONObject serverResponse = new JSONObject();
+			String response;
+			String errorMessage;
+			if(subscriberList.isEmpty()){
+				response="empty subscriberList";
+				serverResponse.put(ConstantEnum.CommandType.response.name(), response);
+				return serverResponse;
+			}
+			for(int i=0; i<subscriberList.size(); i++){
+				if(id.equals(subscriberList.get(i))){
+					subscriberList.remove(i);
+					response="id:"+id+" has been successfully unsubscribed.(Waiting to be deleted,Shouldn't be any return here, just for test)";
+					serverResponse.put(ConstantEnum.CommandType.response.name(), response);
+					return serverResponse;//Shouldn't be any return here, just for test
+				}
+			}
+			response=id+" is an invalid id, not found in subscriberList";
+			serverResponse.put(ConstantEnum.CommandType.response.name(), response);
+			return serverResponse;
+		}
+//////////////////////////////////////////////////above handling UNSUBSCRIBE copied and edited by zizhe/////////////////////////////////////////////
 
 }
