@@ -553,9 +553,10 @@ public class ServerHandler {
 		return queryReturn;
 	}
 	
-	//----------------------------------------above copied and edited by zizhe--------------------------------------------
+	//----------------------------------------below copied and edited by zizhe--------------------------------------------
 	/**
 	 * This method creates the JSON objects to be returned to client, in response to Subscribe command.
+	 * @param id
 	 * @param name_query
 	 * @param tags_query
 	 * @param description_query
@@ -957,6 +958,130 @@ public class ServerHandler {
 				return otherReturn;
 			}
 	
-
+//////////////////////////////////////////////////below copied and edited by zizhe/////////////////////////////////////////////
+	/**
+	 * This method creates the JSON object to be returned to client, in response to Query command with Relay field set as TRUE.
+	 * @param inputMessage
+	 * @param resources
+	 * @param serverSocket
+	 * @param serverList
+	 * @param hasDebugOption
+	 * @return the JSON object to be returned to client
+	 */
+	public synchronized static QueryData handlingSubscribeWithRelay(String inputMessage,HashMap<String, Resource> resources, 
+			ServerSocket serverSocket, ArrayList<String> serverList, boolean hasDebugOption){
+			JSONObject inputQuerry = new JSONObject();
+			ArrayList<JSONObject> arrayList = new ArrayList<>();
+			QueryData otherReturn = new QueryData();
+			int totalOtehrResSize = 0;
+			boolean hasMatchServer = false;
+			/**parse input query from the client*/
+			try {
+				JSONParser parser = new JSONParser();
+				inputQuerry = (JSONObject) parser.parse(inputMessage);
+				
+			} catch (org.json.simple.parser.ParseException e) {
+				e.printStackTrace();
+			}
+			
+			/**replace owner, channel with"" and set relay with true, then forward query*/
+			
+			inputQuerry.put("channel", "");
+			/*inputQuerry.put("owner", "");*/
+			inputQuerry.put("relay", "false");
+					
+			/**a list to store success information from other servers*/
+			ArrayList<JSONObject> successOutcome = new ArrayList<>();
+			ArrayList<JSONObject> errorOutcome = new ArrayList<>();			
+			
+			if(!serverList.isEmpty()){
+			
+					for(String server: serverList){
+						
+						String[] hostAndPortTemp = server.split(":");
+						String tempIp = hostAndPortTemp[0];
+						Integer tempPort = Integer.parseInt(hostAndPortTemp[1]);
+						try {
+							/**not query server itself while relay is true*/
+							if(!InetAddress.getLocalHost().getHostAddress().equals(tempIp)){
+								try {
+									Socket otherServer = new Socket(tempIp, tempPort);
+									DataInputStream inputStream = new DataInputStream(otherServer.getInputStream());
+									DataOutputStream outputStream = new DataOutputStream(otherServer.getOutputStream());
+									outputStream.writeUTF(inputQuerry.toJSONString());
+									outputStream.flush();
+									if(hasDebugOption){
+										System.out.println("SENT: "+inputQuerry.toJSONString());
+									}
+									System.out.println("query sent to other server");
+									StopWatch s = new StopWatch();
+									s.start();
+									while(true){
+										if(inputStream.available()>0){
+											String otherServerResponse = inputStream.readUTF();
+											JSONParser parser2 = new JSONParser();
+											
+											JSONObject otherResponse = new JSONObject();
+											otherResponse = (JSONObject)parser2.parse(otherServerResponse);
+											/*System.out.println(otherResponse.toJSONString());*/
+											JSONArray  jsonArray = new JSONArray();
+											
+											arrayList.add((JSONObject)parser2.parse(otherServerResponse));
+											
+											if(otherResponse.containsKey("resultSize")||otherResponse.containsKey("errorMessage")){
+												break;
+											}
+											
+										}
+										/**other server connected but no response*/
+										if(s.getTime()>500){
+											s.stop();
+											return otherReturn;
+										}
+									}
+									
+										if (arrayList.get(0).get("response").equals("success")) {
+											hasMatchServer =true;
+											int size = arrayList.size();
+											totalOtehrResSize = totalOtehrResSize+size;
+											
+											for(int i =1; i<size-1;i++){
+												successOutcome.add(arrayList.get(i));
+												
+											}
+											otherReturn = new QueryData(true, successOutcome);
+											
+											
+										}else{
+											int size = arrayList.size();
+											for(int i = 0;i<size;i++){
+												errorOutcome.add(arrayList.get(i));
+											}
+											otherReturn = new QueryData(false, errorOutcome);
+											
+										}	
+									
+										
+										
+											
+													
+										} catch (Exception e) {
+											
+											e.printStackTrace();
+										}
+							}
+								
+							
+						} catch (UnknownHostException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+						}
+				} 
+				return otherReturn;
+			}
+	
+//////////////////////////////////////////////////above copied and edited by zizhe/////////////////////////////////////////////
+	
 
 }

@@ -329,7 +329,7 @@ public class ServerThread extends Thread{
 					QueryReturn localReturn = ServerHandler.handlingSubscribe(id_sub, name_sub, tags_sub, description_sub, uri_sub, channel_sub, owner_sub,relay2,this.resources, this.serverSocket,this.hostName);
 					
 					
-					queryData = ServerHandler.handlingQueryWithRelay(string, this.resources, this.serverSocket, this.serverList,this.hasDebugOption);
+					queryData = ServerHandler.handlingSubscribeWithRelay(string, this.resources, this.serverSocket, this.serverList,this.hasDebugOption);
 					handleRelay(queryData, localReturn);
 				}
 				
