@@ -83,6 +83,12 @@ public class Client {
 						out.writeUTF(unsubscribeMessage.toJSONString());
 						out.flush();
 						System.out.println("Unsubscribe message sent. You have successfully unsubscribed.");
+						System.out.println("command sent to server: "+unsubscribeMessage.toJSONString());
+						if(hasDebugOption){
+						    System.out.println("-setting debug on");
+						    System.out.println(commandType+" to "+host+":"+port);
+							System.out.println("SENT: "+unsubscribeMessage.toJSONString());
+						}
 						break;
 					}
 					//keep open to receive asynchronous responses from server
