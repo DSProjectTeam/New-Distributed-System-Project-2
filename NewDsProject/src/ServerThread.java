@@ -290,6 +290,8 @@ public class ServerThread extends Thread{
 				String channel_sub = template_resource_sub.get(ConstantEnum.CommandArgument.channel.name()).toString();
 				String owner_sub = template_resource_sub.get(ConstantEnum.CommandArgument.owner.name()).toString();
 				String relay_sub = jsonObject.get(ConstantEnum.CommandArgument.relay.name()).toString();
+				String id_sub = jsonObject.get(ConstantEnum.CommandArgument.id.name()).toString();
+				
 				if(relay_sub.equals("")){
 					relay2 = true;
 				}else{
@@ -298,8 +300,8 @@ public class ServerThread extends Thread{
 				
 				/**just query local resources*/
 				if(relay2==false){
-					QueryReturn queryReturn = ServerHandler.handlingQuery(name_query, tags_query, description_query,
-							uri_query, channel_query, owner_query,relay1,this.resources, this.serverSocket,this.hostName);
+					QueryReturn queryReturn = ServerHandler.handlingQuery(name_sub, tags_sub, description_sub,
+							uri_sub, channel_sub, owner_sub,relay2,this.resources, this.serverSocket,this.hostName);
 					if (queryReturn.hasMatch==false) {
 						sendMessage(queryReturn.reponseMessage);
 					}else{
@@ -307,13 +309,13 @@ public class ServerThread extends Thread{
 							int length = queryReturn.returnList.size();
 							for(int i=0;i<length;i++){
 								output.writeUTF(queryReturn.returnList.get(i).toString());
-								debugMsg.add(queryReturn.returnList.get(i));
+								debugMsg_sub.add(queryReturn.returnList.get(i));
 							}
 							
 							/*output.writeUTF(queryReturn.returnArray.toString());*/
 							output.flush();
 							if(hasDebugOption){
-								System.out.println("SENT: "+debugMsg.toJSONString());
+								System.out.println("SENT: "+debugMsg_sub.toJSONString());
 							}
 							/*System.out.println(Thread.currentThread().getName()+": has matched,sending response message!");*/
 						} catch (IOException e) {
@@ -324,7 +326,7 @@ public class ServerThread extends Thread{
 					
 					/**relay field is true, handle both local query and query with other server in the server list*/
 				}else{
-					QueryReturn localReturn = ServerHandler.handlingQuery(name_query, tags_query, description_query, uri_query, channel_query, owner_query,relay1,this.resources, this.serverSocket,this.hostName);
+					QueryReturn localReturn = ServerHandler.handlingSubscribe(id_sub, name_sub, tags_sub, description_sub, uri_sub, channel_sub, owner_sub,relay2,this.resources, this.serverSocket,this.hostName);
 					
 					
 					queryData = ServerHandler.handlingQueryWithRelay(string, this.resources, this.serverSocket, this.serverList,this.hasDebugOption);
