@@ -41,6 +41,8 @@ public class Client {
 	public static int port = 3781;
 	public static String commandType;
 	public static boolean hasDebugOption;
+	private static boolean enterDetected;
+	public static String id = "";
 
 	/**
 	 * main method to run client
@@ -51,7 +53,6 @@ public class Client {
 			commandType = "";
 			hasDebugOption = false;
 			JSONObject userInput = handleClientInput(args);
-			StopWatch s = new StopWatch();
 			StopWatch swatch = new StopWatch();
 			//set socket to connect to.
 			Socket socket = new Socket(host,port);
@@ -70,32 +71,37 @@ public class Client {
 			DataInputStream in = new DataInputStream(socket.getInputStream());
 			switch(commandType){
 			case "-subscribe": 
-				s.start();
+				enterDetected = false;
+				startEnterListen();
 				while(true){
 					//when a JSON messages returned, reset and restart timer.
-					if(in.available()>0){
-						String responseMessage = in.readUTF();
-						handleServerResponse(userInput, responseMessage, in);
-						s.reset();
-						s.start();
-					}
-					if(s.getTime()>1300){
+					if(enterDetected==true){
+						System.out.println("enter detected.unsubscribed");
+						JSONObject unsubscribeMessage = new JSONObject();
+						unsubscribeMessage.put(ConstantEnum.CommandType.command.name(),"UNSUBSCRIBE");
+						unsubscribeMessage.put(ConstantEnum.CommandArgument.id.name(),id);
+						out.writeUTF(unsubscribeMessage.toJSONString());
+						out.flush();
 						break;
 					}
+					if(in.available()>0){
+						String responseMessage = in.readUTF();
+						handleServerResponse(userInput, responseMessage, in);
+					}
 				}
-				break;
+				break;//???should here a break?
 			default:
 				//start timer, when over 1.3 second passed after the last JSON message was received, close socket.
-				s.start();
+				swatch.start();
 				while(true){
 					//when a JSON messages returned, reset and restart timer.
 					if(in.available()>0){
 						String responseMessage = in.readUTF();
 						handleServerResponse(userInput, responseMessage, in);
-						s.reset();
-						s.start();
+						swatch.reset();
+						swatch.start();
 					}
-					if(s.getTime()>1300){
+					if(swatch.getTime()>1300){
 						break;
 					}
 				}
@@ -155,7 +161,7 @@ public class Client {
 	    String secret = "";
 	    boolean relay = true;
 	    String serversAll = "";
-	    String id = "";
+	    
 	
 	    Options options = new Options();
 	    options.addOption("command",true,"input command"); 
@@ -448,6 +454,39 @@ public class Client {
 		}
 		return chunkSize;
 	}
+	
+	
+	
+	
+	
+	
+	
+	
+	
+    /**
+     * This method start an individual thread to listen for ENTER. 
+     * When ENTER is pressed, it change enterDetected to true.
+     */
+    public static void startEnterListen(){
+          Thread thread = new Thread(new Runnable(){
+                @Override
+                public void run() {
+                            Scanner scanner = new Scanner(System.in);
+                            scanner.nextLine();
+                            enterDetected = true;
+                }
+           });
+          thread.start();
+    }
+	
+	
+	
+	
+	
+	
+	
+	
+	
 	
 	
 	
