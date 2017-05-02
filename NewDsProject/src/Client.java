@@ -74,16 +74,18 @@ public class Client {
 				enterDetected = false;
 				startEnterListen();
 				while(true){
-					//when a JSON messages returned, reset and restart timer.
+					//when ENTER detected, send out UNSUBSCRIBE command, then close connection
 					if(enterDetected==true){
-						System.out.println("enter detected.unsubscribed");
+						System.out.println("ENTER detected.");
 						JSONObject unsubscribeMessage = new JSONObject();
 						unsubscribeMessage.put(ConstantEnum.CommandType.command.name(),"UNSUBSCRIBE");
 						unsubscribeMessage.put(ConstantEnum.CommandArgument.id.name(),id);
 						out.writeUTF(unsubscribeMessage.toJSONString());
 						out.flush();
+						System.out.println("Unsubscribe message sent. You have successfully unsubscribed.");
 						break;
 					}
+					//keep open to receive asynchronous responses from server
 					if(in.available()>0){
 						String responseMessage = in.readUTF();
 						handleServerResponse(userInput, responseMessage, in);
