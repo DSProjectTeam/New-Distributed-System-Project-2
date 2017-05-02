@@ -856,14 +856,17 @@ public class ServerHandler {
 			try {
 				JSONParser parser = new JSONParser();
 				inputQuerry = (JSONObject) parser.parse(inputMessage);
-				
+				JSONObject object = (JSONObject) inputQuerry.get("resourceTemplate");
+				object.put("channel", "");
+				object.put("owner", "");
+				inputQuerry.put("resourceTemplate", object);
 			} catch (org.json.simple.parser.ParseException e) {
 				e.printStackTrace();
 			}
 			
 			/**replace owner, channel with"" and set relay with true, then forward query*/
 			
-			inputQuerry.put("channel", "");
+			//inputQuerry.put("channel", "");
 			/*inputQuerry.put("owner", "");*/
 			inputQuerry.put("relay", "false");
 					
