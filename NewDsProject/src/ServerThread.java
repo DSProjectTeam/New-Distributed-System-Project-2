@@ -61,6 +61,8 @@ public class ServerThread extends Thread{
 	
 	public int interval;
 	
+	public ArrayList<String> subscriberList;
+	
 	public ServerThread(Socket socket, HashMap<String, Resource> resources, String secret, ServerSocket serverSocket,
 			ArrayList<String> serverList, boolean hasDebugOption, int interval, String ServerHostName){
 		//try {
@@ -335,7 +337,13 @@ public class ServerThread extends Thread{
 				
 				/*QueryReturn queryReturn = ServerHandler.handlingQuery(name_query, tags_query, description_query, uri_query, channel_query, owner_query,relay1,this.resources, this.serverSocket);*/
 				break;
-				//--------------------------------------above-----------------------added and edited by Zizhe----------------
+				//--------------------------------------above----------SUBSCRIBE-------------added and edited by Zizhe----------------
+			case "UNSUBSCRIBE":
+				String unsub_id = jsonObject.get(ConstantEnum.CommandArgument.id.name()).toString();
+				sendResponse = ServerHandler.handlingUnsubscribe(subscriberList, unsub_id);
+				sendMessage(sendResponse);
+				break;
+				/////////////////////////////////////////////////////////////////////////////////////above----------UNSUBSCRIBE-------------added and edited by Zizhe/////////////////////////////////////////////////////////////////////////////////////
 			case "EXCHANGE":
 				JSONArray serverListJSONArray = (JSONArray) jsonObject.get("serverList");// need to deal with "serverList" missing	!
 				ArrayList<String> serverList_exchange = new ArrayList<>();
