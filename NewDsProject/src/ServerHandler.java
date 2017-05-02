@@ -986,7 +986,7 @@ public class ServerHandler {
 			
 			/**replace owner, channel with"" and set relay with true, then forward query*/
 			
-			inputQuerry.put("channel", "");
+			inputQuerry.put("channel", "");////////////////////////////////need fix/////////////////////////////////////////
 			/*inputQuerry.put("owner", "");*/
 			inputQuerry.put("relay", "false");
 					

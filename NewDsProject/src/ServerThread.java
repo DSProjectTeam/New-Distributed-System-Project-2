@@ -300,7 +300,7 @@ public class ServerThread extends Thread{
 				
 				/**just query local resources*/
 				if(relay2==false){
-					QueryReturn queryReturn = ServerHandler.handlingQuery(name_sub, tags_sub, description_sub,
+					QueryReturn queryReturn = ServerHandler.handlingSubscribe(id_sub,name_sub, tags_sub, description_sub,
 							uri_sub, channel_sub, owner_sub,relay2,this.resources, this.serverSocket,this.hostName);
 					if (queryReturn.hasMatch==false) {
 						sendMessage(queryReturn.reponseMessage);
