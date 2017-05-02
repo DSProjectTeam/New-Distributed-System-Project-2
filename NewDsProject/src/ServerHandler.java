@@ -1032,37 +1032,33 @@ public class ServerHandler {
 											arrayList.add((JSONObject)parser2.parse(otherServerResponse));
 											
 											if(otherResponse.containsKey("resultSize")||otherResponse.containsKey("errorMessage")){
-												break;
+												if (arrayList.get(0).get("response").equals("success")) {
+													hasMatchServer =true;
+													int size = arrayList.size();
+													totalOtehrResSize = totalOtehrResSize+size;
+													
+													for(int i =1; i<size-1;i++){
+														successOutcome.add(arrayList.get(i));
+														
+													}
+													otherReturn = new QueryData(true, successOutcome);
+													
+													
+												}else{
+													int size = arrayList.size();
+													for(int i = 0;i<size;i++){
+														errorOutcome.add(arrayList.get(i));
+													}
+													otherReturn = new QueryData(false, errorOutcome);
+													
+												}	
 											}
 											
 										}
-										/**other server connected but no response*/
-										if(s.getTime()>500){
-											s.stop();
-											return otherReturn;
-										}
+
 									}
 									
-										if (arrayList.get(0).get("response").equals("success")) {
-											hasMatchServer =true;
-											int size = arrayList.size();
-											totalOtehrResSize = totalOtehrResSize+size;
-											
-											for(int i =1; i<size-1;i++){
-												successOutcome.add(arrayList.get(i));
-												
-											}
-											otherReturn = new QueryData(true, successOutcome);
-											
-											
-										}else{
-											int size = arrayList.size();
-											for(int i = 0;i<size;i++){
-												errorOutcome.add(arrayList.get(i));
-											}
-											otherReturn = new QueryData(false, errorOutcome);
-											
-										}	
+
 									
 										
 										
