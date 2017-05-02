@@ -1081,17 +1081,54 @@ public class ServerHandler {
 			}
 	
 //////////////////////////////////////////////////above copied and edited by zizhe/////////////////////////////////////////////
-	public synchronized static JSONObject handlingUnsubscribe(ArrayList<String> subscriberList, String id){
+	public synchronized static JSONObject handlingUnsubscribe(ArrayList<String> subscriberList, String id, JSONObject jsonObject,HashMap<String, Resource> resources, 
+			ServerSocket serverSocket, ArrayList<String> serverList, boolean hasDebugOption){
 			JSONObject serverResponse = new JSONObject();
 			String response;
 			String errorMessage;
 			if(subscriberList.isEmpty()){
-				response="empty subscriberList";
+				response="failed. the subscriberList is empty";
 				serverResponse.put(ConstantEnum.CommandType.response.name(), response);
 				return serverResponse;
 			}
 			for(int i=0; i<subscriberList.size(); i++){
+				//if contain the id, forward the unsubscribe command to servers in the serverList
 				if(id.equals(subscriberList.get(i))){
+					if(!serverList.isEmpty()){
+						
+						for(String server: serverList){
+							
+							String[] hostAndPortTemp = server.split(":");
+							String tempIp = hostAndPortTemp[0];
+							Integer tempPort = Integer.parseInt(hostAndPortTemp[1]);
+							try {
+								//not forward to the server itself
+								if(!InetAddress.getLocalHost().getHostAddress().equals(tempIp)){
+									try {
+										Socket otherServer = new Socket(tempIp, tempPort);
+										DataInputStream inputStream = new DataInputStream(otherServer.getInputStream());
+										DataOutputStream outputStream = new DataOutputStream(otherServer.getOutputStream());
+										outputStream.writeUTF(jsonObject.toJSONString());
+										outputStream.flush();
+										if(hasDebugOption){
+											System.out.println("SENT: "+jsonObject.toJSONString());
+										}
+										System.out.println("Unsubscribe command sent to other server");
+		
+											} catch (Exception e) {
+												
+												e.printStackTrace();
+											}
+								}
+									
+								
+							} catch (UnknownHostException e) {
+								// TODO Auto-generated catch block
+								e.printStackTrace();
+							}
+							}
+					} 
+					
 					subscriberList.remove(i);
 					response="id:"+id+" has been successfully unsubscribed.(Waiting to be deleted,Shouldn't be any return here, just for test)";
 					serverResponse.put(ConstantEnum.CommandType.response.name(), response);

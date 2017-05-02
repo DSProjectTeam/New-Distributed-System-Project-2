@@ -340,7 +340,7 @@ public class ServerThread extends Thread{
 				//--------------------------------------above----------SUBSCRIBE-------------added and edited by Zizhe----------------
 			case "UNSUBSCRIBE":
 				String unsub_id = jsonObject.get(ConstantEnum.CommandArgument.id.name()).toString();
-				sendResponse = ServerHandler.handlingUnsubscribe(subscriberList, unsub_id);
+				sendResponse = ServerHandler.handlingUnsubscribe(subscriberList, unsub_id, jsonObject, serverList);
 				sendMessage(sendResponse);
 				break;
 				/////////////////////////////////////////////////////////////////////////////////////above----------UNSUBSCRIBE-------------added and edited by Zizhe/////////////////////////////////////////////////////////////////////////////////////
