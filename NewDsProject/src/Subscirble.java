@@ -73,7 +73,7 @@ public class Subscirble {
 					subscirble.sendMessage(queryReturn.reponseMessage);
 				}else{
 					//valid template, match or waiting update
-					subscirble.checkUpdates();
+					
 					while(subscirble.updated==true){
 						
 					}
