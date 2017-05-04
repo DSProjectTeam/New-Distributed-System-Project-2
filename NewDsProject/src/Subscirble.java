@@ -22,6 +22,8 @@ public class Subscirble {
 	DataInputStream in;
 	DataOutputStream out;
 	boolean hasDebugOption;
+	ArrayList<JSONObject> matchList;
+	int hitCounter;
 	
 	public Subscirble(HashMap<String, Resource> resources,DataInputStream in,DataOutputStream out,boolean hasDebugOption){
 		this.resources = resources;
@@ -29,6 +31,8 @@ public class Subscirble {
 		this.in = in;
 		this.out = out;
 		this.hasDebugOption = hasDebugOption;
+		ArrayList<JSONObject> matchList = new ArrayList<>();
+		int hitCounter = 0;
 	}
 	
 	
@@ -37,8 +41,8 @@ public class Subscirble {
 		JSONObject template_resource_sub = (JSONObject)input.get("resourceTemplate");
 		JSONArray debugMsg_sub = new JSONArray();
 		boolean relay;
-		ArrayList<Resource> matchList = new ArrayList<>();
 		boolean isUnsubscribe =false;
+
 		
 		String [] tags = ServerThread.handleTags(template_resource_sub.get(ConstantEnum.CommandArgument.tags.name()).toString());
 		String name = template_resource_sub.get(ConstantEnum.CommandArgument.name.name()).toString();
@@ -57,35 +61,59 @@ public class Subscirble {
 		//create new callabe thread to monitor unsubscribe status
 		ExecutorService executorService = Executors.newFixedThreadPool(1);
 		Future<Boolean> unsubscribe = executorService.submit(new IsSubscribe(in, id));
-		try {
-			isUnsubscribe = unsubscribe.get();
-		} catch (Exception e) {
-			
-		}
+		
 		//loop until receive unsubscribe message
 		while(isUnsubscribe==false){
 			if (relay ==false) {
 				QueryReturn queryReturn= ServerHandler.handlingSubscribe(id, name, tags, description, uri, channel, owner, relay, resources, socket, hostName);
 				Subscirble subscirble = new Subscirble(resources,in,out,hasDebugOption);
 				
-				//resourse template missing filed or invalid
+				//resource template missing filed or invalid
 				if (queryReturn.hasMatch==false&&queryReturn.reponseMessage.get("response").toString().equals("error")) {
 					subscirble.sendMessage(queryReturn.reponseMessage);
+					break;
 				}else{
 					//valid template, match or waiting update
 					
-					while(subscirble.updated==true){
+					
+					if (queryReturn.reponseMessage.get("response").toString().equals("pending")) {
+						subscirble.checkUpdates(id, name, tags, description, uri, channel, owner, relay,socket, hostName);
+						//valid template, no match, waiting update
 						
+						
+					}else{
+						for(JSONObject jsonObject: queryReturn.returnList){
+							try {
+								out.writeUTF(jsonObject.toString());
+								
+								//put it in the match list to avoid duplicate resource has been sent
+								subscirble.matchList.add(jsonObject);
+							} catch (IOException e) {
+								e.printStackTrace();
+							}
+							
+						}
+						subscirble.checkUpdates(id, name, tags, description, uri, channel, owner, relay,socket, hostName);
+						
+						subscirble.hitCounter = subscirble.hitCounter +queryReturn.returnList.size();
 					}
+					
 				}
 				
-				
-				
-				
-				
-				
-				
-				
+				//if unsubscribe, break the loop, return result size
+				try {
+					isUnsubscribe = unsubscribe.get();
+					if (isUnsubscribe) {
+						JSONObject jsonObject = new JSONObject();
+						jsonObject.put("resultSize", subscirble.hitCounter);
+						out.writeUTF(jsonObject.toJSONString());		
+						out.flush();
+						Thread.currentThread().yield();
+						break;
+					}
+				} catch (Exception e) {
+					
+				}
 				
 			}else{
 				
@@ -103,20 +131,40 @@ public class Subscirble {
 		
 	}
 	
-	public void checkUpdates(){
+	public void checkUpdates(String id, String name,String[] tags,String description,String uri,String channel,String owner,
+			boolean relay,ServerSocket socket,String hostName){
 		new Timer().schedule(new TimerTask() {
 			
 			@Override
 			public void run() {
-			checkUpdated();				
+			checkUpdated(id, name, tags, description, uri, channel, owner, relay, socket, hostName);				
 			}
 		}, 1000, 1000);
 	}
 	
-	private boolean checkUpdated() {
-	    this.updated = !this.resources.equals(this.lastState);
+	private boolean checkUpdated(String id, String name,String[] tags,String description,String uri,String channel,String owner,
+			boolean relay,ServerSocket socket,String hostName) {
+	   
+		if(!this.resources.equals(this.lastState)){
+			QueryReturn temp = ServerHandler.handlingSubscribe(id, name, tags, description, uri, channel, owner, relay, this.resources, socket, hostName);
+			if (temp.hasMatch==true) {
+				for(JSONObject jsonObject : temp.returnList){
+					if(!matchList.contains(jsonObject)){
+						try {
+							this.out.writeUTF(jsonObject.toJSONString());
+							this.hitCounter++;
+						} catch (IOException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+						matchList.add(jsonObject);
+					}
+				}
+			}
+		}
+		
 	    this.lastState.clear();
-	    this.lastState.putAll(resources);
+	    this.lastState.putAll(this.resources);
 	    return this.updated;
 	}
 	
