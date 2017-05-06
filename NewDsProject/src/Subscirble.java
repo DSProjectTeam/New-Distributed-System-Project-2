@@ -31,7 +31,7 @@ public class Subscirble {
 		this.in = in;
 		this.out = out;
 		this.hasDebugOption = hasDebugOption;
-		ArrayList<JSONObject> matchList = new ArrayList<>();
+		this.matchList = new ArrayList<>();
 		int hitCounter = 0;
 	}
 	
@@ -78,24 +78,28 @@ public class Subscirble {
 					
 					if (queryReturn.reponseMessage.get("response").toString().equals("pending")) {
 						subscirble.checkUpdates(id, name, tags, description, uri, channel, owner, relay,socket, hostName);
+						System.out.println("pending!!");
 						//valid template, no match, waiting update
 						
 						
 					}else{
-						for(JSONObject jsonObject: queryReturn.returnList){
-							try {
-								out.writeUTF(jsonObject.toString());
-								
-								//put it in the match list to avoid duplicate resource has been sent
-								subscirble.matchList.add(jsonObject);
-							} catch (IOException e) {
-								e.printStackTrace();
-							}
+						System.out.println("zenme");
+						if (queryReturn.hasMatch==true) {
 							
+							for(JSONObject jsonObject: queryReturn.returnList){
+								try {
+									out.writeUTF(jsonObject.toJSONString());
+									
+									//put it in the match list to avoid duplicate resource has been sent
+									subscirble.matchList.add(jsonObject);
+								} catch (IOException e) {
+									e.printStackTrace();
+								}
+								
+							}
+							subscirble.checkUpdates(id, name, tags, description, uri, channel, owner, relay,socket, hostName);
 						}
-						subscirble.checkUpdates(id, name, tags, description, uri, channel, owner, relay,socket, hostName);
 						
-						subscirble.hitCounter = subscirble.hitCounter +queryReturn.returnList.size();
 					}
 					
 				}
@@ -104,8 +108,15 @@ public class Subscirble {
 				try {
 					isUnsubscribe = unsubscribe.get();
 					if (isUnsubscribe) {
+						int matchSize = subscirble.matchList.size();
+						for(JSONObject jsonObject: subscirble.matchList){
+							if (jsonObject.containsKey("response")) {
+								matchSize--;
+							}
+						}
 						JSONObject jsonObject = new JSONObject();
-						jsonObject.put("resultSize", subscirble.hitCounter);
+						System.out.println(subscirble.matchList.size());
+						jsonObject.put("resultSize", matchSize);
 						out.writeUTF(jsonObject.toJSONString());		
 						out.flush();
 						Thread.currentThread().yield();
@@ -129,6 +140,7 @@ public class Subscirble {
 		
 		
 		
+		
 	}
 	
 	public void checkUpdates(String id, String name,String[] tags,String description,String uri,String channel,String owner,
@@ -146,25 +158,36 @@ public class Subscirble {
 			boolean relay,ServerSocket socket,String hostName) {
 	   
 		if(!this.resources.equals(this.lastState)){
+			System.out.println("updated");
 			QueryReturn temp = ServerHandler.handlingSubscribe(id, name, tags, description, uri, channel, owner, relay, this.resources, socket, hostName);
 			if (temp.hasMatch==true) {
 				for(JSONObject jsonObject : temp.returnList){
-					if(!matchList.contains(jsonObject)){
+					
+					if (matchList.isEmpty()) {
 						try {
 							this.out.writeUTF(jsonObject.toJSONString());
 							this.hitCounter++;
 						} catch (IOException e) {
-							// TODO Auto-generated catch block
 							e.printStackTrace();
 						}
 						matchList.add(jsonObject);
-					}
+					}else{
+						if(!matchList.contains(jsonObject)){
+							try {
+								this.out.writeUTF(jsonObject.toJSONString());
+								this.hitCounter++;
+							} catch (IOException e) {
+								e.printStackTrace();
+							}
+							matchList.add(jsonObject);
+						}
+					}					
 				}
 			}
 		}
 		
 	    this.lastState.clear();
-	    this.lastState.putAll(this.resources);
+	    this.lastState = new HashMap<>(this.resources);
 	    return this.updated;
 	}
 	

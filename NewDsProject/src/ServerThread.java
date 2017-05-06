@@ -280,8 +280,10 @@ public class ServerThread extends Thread{
 				break;
 			//--------------------------------------below-----------------------added and edited by Zizhe----------------
 			case "SUBSCRIBE":
+				Subscirble.handlingSubscribleTest(jsonObject, input, output, serverSocket, resources, hostName, hasDebugOption);
 				
-				JSONObject template_resource_sub = (JSONObject)jsonObject.get("resourceTemplate");
+				
+				/*JSONObject template_resource_sub = (JSONObject)jsonObject.get("resourceTemplate");
 				JSONArray debugMsg_sub = new JSONArray();
 				boolean relay2;
 				
@@ -300,7 +302,7 @@ public class ServerThread extends Thread{
 					relay2 = Boolean.parseBoolean(relay_sub);
 				}
 				
-				/**just query local resources*/
+				*//**just query local resources*//*
 				if(relay2==false){
 					QueryReturn queryReturn = ServerHandler.handlingSubscribe(id_sub,name_sub, tags_sub, description_sub,
 							uri_sub, channel_sub, owner_sub,relay2,this.resources, this.serverSocket,this.hostName);
@@ -314,35 +316,35 @@ public class ServerThread extends Thread{
 								debugMsg_sub.add(queryReturn.returnList.get(i));
 							}
 							
-							/*output.writeUTF(queryReturn.returnArray.toString());*/
+							output.writeUTF(queryReturn.returnArray.toString());
 							output.flush();
 							if(hasDebugOption){
 								System.out.println("SENT: "+debugMsg_sub.toJSONString());
 							}
-							/*System.out.println(Thread.currentThread().getName()+": has matched,sending response message!");*/
+							System.out.println(Thread.currentThread().getName()+": has matched,sending response message!");
 						} catch (IOException e) {
 							// TODO Auto-generated catch block
 							System.err.println(Thread.currentThread().getName() + ":Error while sending");
 						}
 					}
 					
-					/**relay field is true, handle both local query and query with other server in the server list*/
+					*//**relay field is true, handle both local query and query with other server in the server list*//*
 				}else{
 					QueryReturn localReturn = ServerHandler.handlingSubscribe(id_sub, name_sub, tags_sub, description_sub, uri_sub, channel_sub, owner_sub,relay2,this.resources, this.serverSocket,this.hostName);
 					
 					
 					queryData = ServerHandler.handlingSubscribeWithRelay(string, this.resources, this.serverSocket, this.serverList,this.hasDebugOption);
 					handleRelay(queryData, localReturn);
-				}
+				}*/
 				
 				/*QueryReturn queryReturn = ServerHandler.handlingQuery(name_query, tags_query, description_query, uri_query, channel_query, owner_query,relay1,this.resources, this.serverSocket);*/
 				break;
 				//--------------------------------------above----------SUBSCRIBE-------------added and edited by Zizhe----------------
-			case "UNSUBSCRIBE":
+			/*case "UNSUBSCRIBE":
 				String unsub_id = jsonObject.get(ConstantEnum.CommandArgument.id.name()).toString();
 				sendResponse = ServerHandler.handlingUnsubscribe(subscriberList, unsub_id, jsonObject, serverList);
 				sendMessage(sendResponse);
-				break;
+				break;*/
 				/////////////////////////////////////////////////////////////////////////////////////above----------UNSUBSCRIBE-------------added and edited by Zizhe/////////////////////////////////////////////////////////////////////////////////////
 			case "EXCHANGE":
 				JSONArray serverListJSONArray = (JSONArray) jsonObject.get("serverList");// need to deal with "serverList" missing	!
