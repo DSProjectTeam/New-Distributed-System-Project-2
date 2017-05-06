@@ -764,19 +764,20 @@ public class ServerHandler {
 								/*returnArray1.add(MatchResouce);*/
 								returnList.add(MatchResouce);
 							}
-							//serverResponse.put(ConstantEnum.CommandType.resultSize, matchResourceSet.size());
-							
-							returnSize.put(ConstantEnum.CommandType.resultSize, matchResourceSet.size());
-							
+							/*here do not put the list size in the queryReturn, cos we gonna count it in Subscribe.java*/
+		
+							//serverResponse.put(ConstantEnum.CommandType.resultSize, matchResourceSet.size());							
+							//returnSize.put(ConstantEnum.CommandType.resultSize, matchResourceSet.size());							
 							/*returnArray1.add(returnSize);*/
-							returnList.add(returnSize);
+							//returnList.add(returnSize);
 							/*queryReturn = new QueryReturn(returnArray1);*/
+							
 							queryReturn = new QueryReturn(returnList);
 							
 							hasMacthResource = true;
 						}else{							
-							errorMessage = "missing resourceTemplate";
-							response = "error";
+							errorMessage = "no match resource, waiting for update";
+							response = "pending";
 							serverResponse.put(ConstantEnum.CommandType.response.name(),response);
 							serverResponse.put(ConstantEnum.CommandArgument.errorMessage.name(), errorMessage);
 							queryReturn = new QueryReturn(serverResponse);
