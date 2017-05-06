@@ -64,59 +64,54 @@ public class Subscirble {
 		
 		//loop until receive unsubscribe message
 		while(isUnsubscribe==false){
+			
 			if (relay ==false) {
 				QueryReturn queryReturn= ServerHandler.handlingSubscribe(id, name, tags, description, uri, channel, owner, relay, resources, socket, hostName);
 				Subscirble subscirble = new Subscirble(resources,in,out,hasDebugOption);
 				
-				//resource template missing filed or invalid
-				if (queryReturn.hasMatch==false&&queryReturn.reponseMessage.get("response").toString().equals("error")) {
-					subscirble.sendMessage(queryReturn.reponseMessage);
-					break;
-				}else{
-					//valid template, match or waiting update
+				//invalid template or valid template but no current match, pending.
+				if (queryReturn.hasMatch==false) {
 					
-					
-					if (queryReturn.reponseMessage.get("response").toString().equals("pending")) {
-						subscirble.checkUpdates(id, name, tags, description, uri, channel, owner, relay,socket, hostName);
-						System.out.println("pending!!");
-						//valid template, no match, waiting update
-						
-						
+					//invalid template
+					if (queryReturn.reponseMessage.get("response").toString().equals("error")) {
+						subscirble.sendMessage(queryReturn.reponseMessage);
+						break;
 					}else{
-						System.out.println("zenme");
-						if (queryReturn.hasMatch==true) {
-							
-							for(JSONObject jsonObject: queryReturn.returnList){
-								try {
-									out.writeUTF(jsonObject.toJSONString());
-									
-									//put it in the match list to avoid duplicate resource has been sent
-									subscirble.matchList.add(jsonObject);
-								} catch (IOException e) {
-									e.printStackTrace();
-								}
-								
-							}
+						//valid template, but no match currently, pending
+						if (queryReturn.reponseMessage.get("response").toString().equals("pending")) {
 							subscirble.checkUpdates(id, name, tags, description, uri, channel, owner, relay,socket, hostName);
+							System.out.println("pending!!");
 						}
-						
 					}
+				}else{
+					//valid template, has match, monitor resources update.
+	
+						for(JSONObject jsonObject: queryReturn.returnList){
+							try {
+								out.writeUTF(jsonObject.toJSONString());
+								
+								//put it in the match list to avoid duplicate resource has been sent
+								subscirble.matchList.add(jsonObject);
+							} catch (IOException e) {
+								e.printStackTrace();
+							}
+							
+						}
+						subscirble.checkUpdates(id, name, tags, description, uri, channel, owner, relay,socket, hostName);
 					
 				}
+				
 				
 				//if unsubscribe, break the loop, return result size
 				try {
 					isUnsubscribe = unsubscribe.get();
 					if (isUnsubscribe) {
-						int matchSize = subscirble.matchList.size();
-						for(JSONObject jsonObject: subscirble.matchList){
-							if (jsonObject.containsKey("response")) {
-								matchSize--;
-							}
-						}
+						//remove the {"id":xxx} or {"resposne":"success"}
+						subscirble.matchList.remove(0);
+						
 						JSONObject jsonObject = new JSONObject();
 						System.out.println(subscirble.matchList.size());
-						jsonObject.put("resultSize", matchSize);
+						jsonObject.put("resultSize", subscirble.matchList.size());
 						out.writeUTF(jsonObject.toJSONString());		
 						out.flush();
 						Thread.currentThread().yield();
@@ -143,6 +138,10 @@ public class Subscirble {
 		
 	}
 	
+	
+	/**
+	 * monitor the status of the resources hashmap, if has changed and match resource template. write output.
+	 * */
 	public void checkUpdates(String id, String name,String[] tags,String description,String uri,String channel,String owner,
 			boolean relay,ServerSocket socket,String hostName){
 		new Timer().schedule(new TimerTask() {
