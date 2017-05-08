@@ -5,6 +5,7 @@ import java.io.RandomAccessFile;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.Arrays;
+import java.util.Random;
 import java.util.Scanner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -13,6 +14,7 @@ import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.Options;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.time.*;
 
 import org.json.simple.JSONObject;
@@ -82,7 +84,7 @@ public class Client {
 						unsubscribeMessage.put(ConstantEnum.CommandArgument.id.name(),id);
 						out.writeUTF(unsubscribeMessage.toJSONString());
 						out.flush();
-						System.out.println("Unsubscribe message sent. You have successfully unsubscribed.");
+						System.out.println("Unsubscribe message sent. ID: "+id+" have successfully unsubscribed.");
 						System.out.println("command sent to server: "+unsubscribeMessage.toJSONString());
 						if(hasDebugOption){
 						    System.out.println("-setting debug on");
@@ -300,6 +302,11 @@ public class Client {
 	    
 	    if(cmd.hasOption("id")){
 		       id = cmd.getOptionValue("id");
+		   }
+	    
+	    if(!cmd.hasOption("id")){
+			Random random = new Random();
+			id = RandomStringUtils.randomNumeric(5);
 		   }
 	    
 	    if(cmd.hasOption("command")){
