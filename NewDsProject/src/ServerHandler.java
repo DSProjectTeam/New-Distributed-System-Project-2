@@ -660,11 +660,11 @@ public class ServerHandler {
 								returnList.add(MatchResouce);
 								
 							}
-							returnSize.put(ConstantEnum.CommandType.resultSize, allResource.size());
+							//returnSize.put(ConstantEnum.CommandType.resultSize, allResource.size());
 							
 							
 							/*returnArray1.add(returnSize);*/		
-							returnList.add(returnSize);							
+							//returnList.add(returnSize);							
 							
 							/*queryReturn = new QueryReturn(returnArray1);*/
 							queryReturn = new QueryReturn(returnList); 

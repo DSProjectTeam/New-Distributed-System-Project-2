@@ -29,14 +29,13 @@ public class IsSubscribe implements Callable<Boolean>{
 					JSONObject message = (JSONObject) parser.parse(in.readUTF());
 					if (message.get("command").toString().equals("UNSUBSCRIBE")&&
 							message.get("id").toString().equals(id)) {
-						System.out.println("111");
 						isUnsubscribe = true;
 						break;
 					}
 				}
 			}
 		} catch (Exception e) {
-			// TODO: handle exception
+			e.printStackTrace();
 		}
 		return isUnsubscribe;
 		
