@@ -553,7 +553,7 @@ public class ServerHandler {
 		return queryReturn;
 	}
 	
-	//----------------------------------------below copied and edited by zizhe--------------------------------------------
+	///////////////////////////////////////////////////////below copied and edited by zizhe///////////////////////////////////////////////////
 	/**
 	 * This method creates the JSON objects to be returned to client, in response to Subscribe command.
 	 * @param id
@@ -793,7 +793,7 @@ public class ServerHandler {
 		}while(queryReturn==null);
 		return queryReturn;
 	}
-	//----------------------------------------above copied and edited by zizhe--------------------------------------------
+	/////////////////////////////////////////////above copied and edited by zizhe///////////////////////////////////////////////////////////////
 	
 	/**
 	 * This method creates the JSON object to be returned to client, in response to Exchange command.
@@ -1131,7 +1131,7 @@ public class ServerHandler {
 					} 
 					
 					subscriberList.remove(i);
-					response="id:"+id+" has been successfully unsubscribed.(Waiting to be deleted,Shouldn't be any return here, just for test)";
+					response="id:"+id+" has successfully unsubscribed.";
 					serverResponse.put(ConstantEnum.CommandType.response.name(), response);
 					return serverResponse;//Shouldn't be any return here, just for test
 				}
