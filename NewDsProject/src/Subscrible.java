@@ -170,81 +170,25 @@ public class Subscrible {
 						for(String server: serverList){
 
 								String[] hostAndPortTemp = server.split(":");
-								String tempIp = hostAndPortTemp[0];
+								String tempIP = hostAndPortTemp[0];
 								Integer tempPort = Integer.parseInt(hostAndPortTemp[1]);
 
 								//create new callabe thread to monitor unsubscribe status
-								if(!InetAddress.getLocalHost().getHostAddress().equals(tempIp)){
+								if(!InetAddress.getLocalHost().getHostAddress().equals(tempIP)){
 									
 								}		
-									Future<Boolean> unsubscribe = executorService.submit(new IsSubscribe(in, id));
-									try {
-										/**not query server itself while relay is true*/
-										if(!InetAddress.getLocalHost().getHostAddress().equals(tempIp)){
-											try {
-												Socket otherServer = new Socket(tempIp, tempPort);
-												//begin a new thread
-												DataInputStream inputStream = new DataInputStream(otherServer.getInputStream());
-												DataOutputStream outputStream = new DataOutputStream(otherServer.getOutputStream());
-												outputStream.writeUTF(input.toJSONString());
-												outputStream.flush();
-												if(hasDebugOption){
-													System.out.println("SENT: "+input.toJSONString());
-												}
-												System.out.println("query sent to other server");
-												StopWatch s = new StopWatch();
-												s.start();
-												while(true){
-													if(inputStream.available()>0){
-														String otherServerResponse = inputStream.readUTF();
-														JSONParser parser2 = new JSONParser();
-														
-														JSONObject otherResponse = new JSONObject();
-														otherResponse = (JSONObject)parser2.parse(otherServerResponse);
-														/*System.out.println(otherResponse.toJSONString());*/
-														JSONArray  jsonArray = new JSONArray();
-														
-														arrayList.add((JSONObject)parser2.parse(otherServerResponse));
-														
-														if(otherResponse.containsKey("resultSize")||otherResponse.containsKey("errorMessage")){
-															if (arrayList.get(0).get("response").equals("success")) {
-																hasMatchServer =true;
-																int size = arrayList.size();
-																totalOtehrResSize = totalOtehrResSize+size;
-																
-																for(int i =1; i<size-1;i++){
-																	successOutcome.add(arrayList.get(i));
-																	
-																}
-																otherReturn = new QueryData(true, successOutcome);
-																
-																
-															}else{
-																int size = arrayList.size();
-																for(int i = 0;i<size;i++){
-																	errorOutcome.add(arrayList.get(i));
-																}
-																otherReturn = new QueryData(false, errorOutcome);
-																
-															}	
-														}
-														
-													}
-												}
-											} catch (Exception e) {
-														e.printStackTrace();
-											}
-										}
-									} catch (UnknownHostException e) {
-										// TODO Auto-generated catch block
-										e.printStackTrace();
-									}
+									Future<Integer> hitCount = executorServiceForward.submit(new WaitSubRelayResponse(input, 
+											tempIP, tempPort,clientHost, clientPort, DataInputStream in,DataInputStream out, id));
+
 									}
 							} 
 					forwarded = true;
 				}
 				
 				//below check serverList update and forward to them, also close threads to no-existed servers.
+				else{//forwarded==true, forwarded already
+					
+				}
 				
 				//once unsubscribe, break the loop, return result size
 				try {

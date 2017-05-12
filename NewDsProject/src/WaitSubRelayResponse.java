@@ -10,7 +10,7 @@ import org.json.simple.parser.JSONParser;
 
 /**this class is used to monitor if received unsubscribe command */
 
-public class WaitSubRelayResponse implements Callable<JSONObject>{
+public class WaitSubRelayResponse implements Callable<Integer>{
 	DataInputStream in;
 	String id;
 	String host;
@@ -21,7 +21,7 @@ public class WaitSubRelayResponse implements Callable<JSONObject>{
 	boolean isUnsubscribe = false;
 	
 	public WaitSubRelayResponse(JSONObject subscribeRequest, String host, int port, 
-			String clientHost, int clientPort,DataInputStream in,String id) {
+			String clientHost, int clientPort,DataInputStream in,DataInputStream out,String id) {
 		this.clientHost = clientHost;
 		this.clientPort = clientPort;
 		this.subscribeRequest = subscribeRequest;
@@ -34,12 +34,13 @@ public class WaitSubRelayResponse implements Callable<JSONObject>{
 	
 	
 	@Override
-	public JSONObject call() {
+	public Integer call() {
+		int hitCount = 0;
 		try {
-			//set socket to connect to.
+			//set server socket to connect to.
 			Socket socket = new Socket(host,port);
 			
-			DataOutputStream out = new DataOutputStream(socket.getOutputStream());
+			DataOutputStream out = new DataOutputStream(socket.getOutputStream());//应该用哪个out呀？？
 			out.writeUTF(subscribeRequest.toJSONString());
 			out.flush();
 			
@@ -49,18 +50,18 @@ public class WaitSubRelayResponse implements Callable<JSONObject>{
 					JSONParser parser = new JSONParser();
 					JSONObject message = (JSONObject) parser.parse(in.readUTF());
 					if (!message.get("resultSize").toString().equals(null)) {
-						//count+
+						hitCount = Integer.parseInt(message.get("resultSize").toString());
 						break;
 					}
 					if (!message.get("name").toString().equals(null)){//这样就能确定是resource了吗？？
 						//set the client socket to connect to.
 						Socket clientSocket = new Socket(clientHost,clientPort);
-						
-						DataOutputStream ClientOut = new DataOutputStream(socket.getOutputStream());
-						ClientOut.writeUTF(message.toJSONString());
-						ClientOut.flush();
+						DataOutputStream clientOut = new DataOutputStream(clientSocket.getOutputStream());
+						clientOut.writeUTF(message.toJSONString());
+						clientOut.flush();
 					}
 					if(message.get("name").toString().equals("error")){
+						System.out.println(message.toJSONString());
 						//other situation:error
 					}
 				}
@@ -68,7 +69,7 @@ public class WaitSubRelayResponse implements Callable<JSONObject>{
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		return isUnsubscribe;
+		return hitCount;
 		
 	}
 	
