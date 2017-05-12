@@ -1114,7 +1114,7 @@ public class ServerHandler {
 										if(hasDebugOption){
 											System.out.println("SENT: "+jsonObject.toJSONString());
 										}
-										System.out.println("Unsubscribe command sent to other server");
+										System.out.println("Unsubscribe command sent to other servers");
 		
 											} catch (Exception e) {
 												

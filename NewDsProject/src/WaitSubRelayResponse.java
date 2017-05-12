@@ -1,0 +1,77 @@
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.net.Socket;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.Callable;
+
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+
+/**this class is used to monitor if received unsubscribe command */
+
+public class WaitSubRelayResponse implements Callable<JSONObject>{
+	DataInputStream in;
+	String id;
+	String host;
+	int port;
+	String clientHost;
+	int clientPort;
+	JSONObject subscribeRequest;
+	boolean isUnsubscribe = false;
+	
+	public WaitSubRelayResponse(JSONObject subscribeRequest, String host, int port, 
+			String clientHost, int clientPort,DataInputStream in,String id) {
+		this.clientHost = clientHost;
+		this.clientPort = clientPort;
+		this.subscribeRequest = subscribeRequest;
+		this.host = host;
+		this.port = port;
+		this.in = in;
+		this.id = id;
+	}
+	
+	
+	
+	@Override
+	public JSONObject call() {
+		try {
+			//set socket to connect to.
+			Socket socket = new Socket(host,port);
+			
+			DataOutputStream out = new DataOutputStream(socket.getOutputStream());
+			out.writeUTF(subscribeRequest.toJSONString());
+			out.flush();
+			
+			DataInputStream in = new DataInputStream(socket.getInputStream());//?应该用哪个in呀？
+			while(true){
+				if (in.available()>0) {
+					JSONParser parser = new JSONParser();
+					JSONObject message = (JSONObject) parser.parse(in.readUTF());
+					if (!message.get("resultSize").toString().equals(null)) {
+						//count+
+						break;
+					}
+					if (!message.get("name").toString().equals(null)){//这样就能确定是resource了吗？？
+						//set the client socket to connect to.
+						Socket clientSocket = new Socket(clientHost,clientPort);
+						
+						DataOutputStream ClientOut = new DataOutputStream(socket.getOutputStream());
+						ClientOut.writeUTF(message.toJSONString());
+						ClientOut.flush();
+					}
+					if(message.get("name").toString().equals("error")){
+						//other situation:error
+					}
+				}
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return isUnsubscribe;
+		
+	}
+	
+}
+
+

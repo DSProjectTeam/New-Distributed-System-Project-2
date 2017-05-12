@@ -280,7 +280,7 @@ public class ServerThread extends Thread{
 				break;
 			//--------------------------------------below-----------------------added and edited by Zizhe----------------
 			case "SUBSCRIBE":
-				Subscirble.handlingSubscribleTest(jsonObject, input, output, serverSocket, resources, hostName, hasDebugOption);
+				Subscrible.handlingSubscribleTest(jsonObject, input, output, serverSocket, resources, hostName, hasDebugOption, serverList);
 				
 				
 				/*JSONObject template_resource_sub = (JSONObject)jsonObject.get("resourceTemplate");
