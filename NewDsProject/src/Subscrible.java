@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -32,7 +33,7 @@ public class Subscrible {
 	boolean hasDebugOption;
 	ArrayList<JSONObject> matchList;
 	int hitCounter;
-	static int relayHitCounter;
+	volatile static int  relayHitCounter;
 	
 	public Subscrible(HashMap<String, Resource> resources,ArrayList<String> serverList, DataInputStream in,DataOutputStream out,boolean hasDebugOption){
 		this.resources = resources;
@@ -45,7 +46,7 @@ public class Subscrible {
 		this.hasDebugOption = hasDebugOption;
 		this.matchList = new ArrayList<>();
 		int hitCounter = 0;
-		int relayHitCounter = 0;
+		this.relayHitCounter = 0;
 	}
 	
 	
@@ -77,9 +78,10 @@ public class Subscrible {
 		Future<Boolean> unsubscribe = executorService.submit(new IsSubscribe(in, id));
 		
 		//loop until receive unsubscribe message
-		while(isUnsubscribe==false){
+		if (relay == false) {
 			
-			if (relay ==false) {
+			while(isUnsubscribe == false){
+				
 				QueryReturn queryReturn= ServerHandler.handlingSubscribe(id, name, tags, description, uri, channel, owner, relay, resources, socket, hostName);
 				Subscrible Subscrible = new Subscrible(resources,serverList,in,out,hasDebugOption);
 				
@@ -128,15 +130,18 @@ public class Subscrible {
 						jsonObject.put("resultSize", Subscrible.matchList.size());
 						out.writeUTF(jsonObject.toJSONString());		
 						out.flush();
-						Thread.currentThread().yield();
+						Thread.yield();
 						break;
 					}
 				} catch (Exception e) {
 					
 				}
 				
-			}else{// when relay is TRUE. also in while(TRUE) loop.
-				//////////////////////////////////////////////////////////////below edited by ruan//////////////////////////////////////////////////////////////
+			}
+		}else{
+			//relay is true
+			
+			while(isUnsubscribe==false){
 				QueryReturn queryReturn= ServerHandler.handlingSubscribe(id, name, tags, description, uri, channel, owner, relay, resources, socket, hostName);
 				Subscrible Subscrible = new Subscrible(resources,serverList,in,out,hasDebugOption);
 				
@@ -156,7 +161,7 @@ public class Subscrible {
 					}
 				}else{
 					//valid template, has match, monitor resources update.
-	
+
 						for(JSONObject jsonObject: queryReturn.returnList){
 							try {
 								out.writeUTF(jsonObject.toJSONString());
@@ -171,8 +176,84 @@ public class Subscrible {
 						Subscrible.checkUpdates(id, name, tags, description, uri, channel, owner, relay,socket, hostName);
 					
 				}
+				
+				if(!serverList.isEmpty()){
+					//change relay field to false.
+					input.put("relay", "false");						
+					ExecutorService executorServiceForward = Executors.newFixedThreadPool(serverList.size());
+					for(String server: serverList){
+						String[] hostAndPortTemp = server.split(":");
+						String tempIP = hostAndPortTemp[0];
+						Integer tempPort = Integer.parseInt(hostAndPortTemp[1]);
+
+						try {
+							if(!InetAddress.getLocalHost().getHostAddress().equals(tempIP)){
+								
+								//WaitSubRelay2 现在自己可以监听client端的unsubscribe命令。
+								WaitSubRelay2 relay2 = new WaitSubRelay2(input, tempIP, tempPort, out, id, relayHitCounter,in);
+								relay2.run();
+							}
+						} catch (Exception e) {
+							e.printStackTrace();
+						}		
+					}
+				} else{//forwarded==true, forwarded already
+					if (!newServers.isEmpty()){	
+						input.put("relay", "false");						
+						ExecutorService executorServiceForward = Executors.newFixedThreadPool(newServers.size());
+						for(String server:newServers){
+								String[] hostAndPortTemp = server.split(":");
+								String tempIP = hostAndPortTemp[0];
+								Integer tempPort = Integer.parseInt(hostAndPortTemp[1]);
+
+								try {
+									if(!InetAddress.getLocalHost().getHostAddress().equals(tempIP)){
+											
+										WaitSubRelay2 relay2 = new WaitSubRelay2(input, tempIP, tempPort, out, id, relayHitCounter,in);
+										relay2.run();
+									}
+								} catch (Exception e) {
+									e.printStackTrace();
+								}		
+						}
+						newServers.clear();
+					}
+				}
+				
+				try {
+					isUnsubscribe = unsubscribe.get();
+					if (isUnsubscribe) {
+						
+						StopWatch watch = new StopWatch();
+						watch.start();
+						
+						/*这里让下面的代码暂停0.5秒再执行，以免WaitRelay2中对relayHitCounter的操作还没更新
+						 * 而下面代码已经将relayHitCounter发送走了。
+						 * */
+						if (watch.getTime()>500) {
+							watch.stop();
+							//remove the {"id":xxx} or {"resposne":"success"}
+							Subscrible.matchList.remove(0);
+							
+							JSONObject jsonObject = new JSONObject();
+							System.out.println("hits from local servers"+Subscrible.matchList.size()+"total hits from other servers"+relayHitCounter);
+							
+							jsonObject.put("resultSize", Subscrible.matchList.size()+relayHitCounter);
+							out.writeUTF(jsonObject.toJSONString());		
+							out.flush();
+							Thread.yield();
+							break;
+						}
+						
+						
+						
+					}
+				} catch (Exception e) {
+					
+				}
+				
 				//below begin to forward the subscription to other servers.
-				if(forwarded==false){
+				/*if(forwarded==false){
 					if(!serverList.isEmpty()){
 						//change relay field to false.
 						input.put("relay", "false");						
@@ -182,10 +263,19 @@ public class Subscrible {
 							String tempIP = hostAndPortTemp[0];
 							Integer tempPort = Integer.parseInt(hostAndPortTemp[1]);
 
-							if(!InetAddress.getLocalHost().getHostAddress().equals(tempIP)){
+							try {
+								if(!InetAddress.getLocalHost().getHostAddress().equals(tempIP)){
+									WaitSubRelay2 relay2 = new WaitSubRelay2(input, tempIP, tempPort, out, id, relayHitCounter);
+									relay2.run();
+									
 									Future<Integer> hitCount = executorServiceForward.submit(new WaitSubRelayResponse(input, 
-										tempIP, tempPort,clientHost, clientPort, id));
-									relayHitCounter += hitCount.get();	
+											tempIP, tempPort,out, id));
+										//Future返回如果没有完成，则一直循环等待，直到Future返回完成
+										while(!hitCount.isDone());
+										relayHitCounter += hitCount.get();	
+								}
+							} catch (Exception e) {
+								e.printStackTrace();
 							}		
 						}
 					} 
@@ -202,10 +292,18 @@ public class Subscrible {
 								String tempIP = hostAndPortTemp[0];
 								Integer tempPort = Integer.parseInt(hostAndPortTemp[1]);
 
-								if(!InetAddress.getLocalHost().getHostAddress().equals(tempIP)){
-										Future<Integer> hitCount = executorServiceForward.submit(new WaitSubRelayResponse(input, 
-											tempIP, tempPort,clientHost, clientPort, id));
-										relayHitCounter += hitCount.get();	
+								try {
+									if(!InetAddress.getLocalHost().getHostAddress().equals(tempIP)){
+											Future<Integer> hitCount = executorServiceForward.submit(new WaitSubRelayResponse(input, 
+												tempIP, tempPort,out, id));
+											//Future返回如果没有完成，则一直循环等待，直到Future返回完成
+											while(!hitCount.isDone());
+											relayHitCounter += hitCount.get();	
+										WaitSubRelay2 relay2 = new WaitSubRelay2(input, tempIP, tempPort, out, id, relayHitCounter);
+										relay2.run();
+									}
+								} catch (Exception e) {
+									e.printStackTrace();
 								}		
 						}
 						newServers.clear();
@@ -241,7 +339,7 @@ public class Subscrible {
 //								ServerSocket serverSocket, ArrayList<String> serverList, boolean hasDebugOption));
 						
 					//if unsubscription have been sent, then wait 1300ms to receive resultSizes from server to be responded.
-					else if ((isUnsubscribe==true)&&(unsubscriptionForwarded==true)&&swatch.getTime()>1300) {
+					if ((isUnsubscribe==true)&&(unsubscriptionForwarded==true)&&swatch.getTime()>1300) {
 						JSONObject jsonObject = new JSONObject();
 						System.out.println("hits from local servers"+Subscrible.matchList.size()+"total hits from other servers"+relayHitCounter);
 						jsonObject.put("resultSize", Subscrible.matchList.size()+relayHitCounter);
@@ -254,17 +352,10 @@ public class Subscrible {
 				} catch (Exception e) {
 					
 				}
-				
-				//////////////////////////////////////////////////////////////above edited by ruan//////////////////////////////////////////////////////////////
-			}
-			
-			
-			
-			
+			}*/
 			
 		}
-		
-		
+		}
 		
 		
 		

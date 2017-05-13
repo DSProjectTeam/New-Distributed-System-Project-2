@@ -5,30 +5,30 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
+import javax.xml.crypto.Data;
+
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 
 /**this class is used to monitor if received unsubscribe command */
 
 public class WaitSubRelayResponse implements Callable<Integer>{
-	DataInputStream in;
 	String id;
 	String host;
 	int port;
-	String clientHost;
-	int clientPort;
+	DataOutputStream clientOut;
 	JSONObject subscribeRequest;
 	boolean isUnsubscribe = false;
 	
+	
 	public WaitSubRelayResponse(JSONObject subscribeRequest, String host, int port, 
-			String clientHost, int clientPort,String id) {
-		this.clientHost = clientHost;
-		this.clientPort = clientPort;
+			DataOutputStream clientOut,String id) {
+		
 		this.subscribeRequest = subscribeRequest;
 		this.host = host;
 		this.port = port;
-		this.in = in;
 		this.id = id;
+		this.clientOut = clientOut;
 	}
 	
 	
@@ -49,7 +49,13 @@ public class WaitSubRelayResponse implements Callable<Integer>{
 				if (in.available()>0) {
 					JSONParser parser = new JSONParser();
 					JSONObject message = (JSONObject) parser.parse(in.readUTF());
-					if (!message.get("resultSize").toString().equals(null)) {
+					
+					while(!message.containsKey("resultSize")){
+						clientOut.writeUTF(message.toJSONString());
+					}
+					hitCount = Integer.parseInt(message.get("resultSize").toString());
+					break;
+					/*if (!message.get("resultSize").toString().equals(null)) {
 						hitCount = Integer.parseInt(message.get("resultSize").toString());
 						break;
 					}
@@ -63,7 +69,7 @@ public class WaitSubRelayResponse implements Callable<Integer>{
 					if(message.get("name").toString().equals("error")){
 						System.out.println(message.toJSONString());
 						//other situation:error
-					}
+					}*/
 				}
 			}
 		} catch (Exception e) {
