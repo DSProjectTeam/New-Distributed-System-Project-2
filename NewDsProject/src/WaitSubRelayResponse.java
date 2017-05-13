@@ -21,7 +21,7 @@ public class WaitSubRelayResponse implements Callable<Integer>{
 	boolean isUnsubscribe = false;
 	
 	public WaitSubRelayResponse(JSONObject subscribeRequest, String host, int port, 
-			String clientHost, int clientPort,DataInputStream in,DataInputStream out,String id) {
+			String clientHost, int clientPort,String id) {
 		this.clientHost = clientHost;
 		this.clientPort = clientPort;
 		this.subscribeRequest = subscribeRequest;
