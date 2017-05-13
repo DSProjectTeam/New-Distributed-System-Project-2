@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -45,7 +46,7 @@ public class Subscrible {
 		this.hasDebugOption = hasDebugOption;
 		this.matchList = new ArrayList<>();
 		int hitCounter = 0;
-		int relayHitCounter = 0;
+		this.relayHitCounter = 0;
 	}
 	
 	
@@ -77,9 +78,10 @@ public class Subscrible {
 		Future<Boolean> unsubscribe = executorService.submit(new IsSubscribe(in, id));
 		
 		//loop until receive unsubscribe message
-		while(isUnsubscribe==false){
+		if (relay == false) {
 			
-			if (relay ==false) {
+			while(isUnsubscribe == false){
+				
 				QueryReturn queryReturn= ServerHandler.handlingSubscribe(id, name, tags, description, uri, channel, owner, relay, resources, socket, hostName);
 				Subscrible Subscrible = new Subscrible(resources,serverList,in,out,hasDebugOption);
 				
@@ -135,8 +137,14 @@ public class Subscrible {
 					
 				}
 				
-			}else{// when relay is TRUE. also in while(TRUE) loop.
-				//////////////////////////////////////////////////////////////below edited by ruan//////////////////////////////////////////////////////////////
+			}
+		}else{
+			//relay is true
+			
+			
+			
+			
+			while(isUnsubscribe==false){
 				QueryReturn queryReturn= ServerHandler.handlingSubscribe(id, name, tags, description, uri, channel, owner, relay, resources, socket, hostName);
 				Subscrible Subscrible = new Subscrible(resources,serverList,in,out,hasDebugOption);
 				
@@ -156,7 +164,7 @@ public class Subscrible {
 					}
 				}else{
 					//valid template, has match, monitor resources update.
-	
+
 						for(JSONObject jsonObject: queryReturn.returnList){
 							try {
 								out.writeUTF(jsonObject.toJSONString());
@@ -171,6 +179,9 @@ public class Subscrible {
 						Subscrible.checkUpdates(id, name, tags, description, uri, channel, owner, relay,socket, hostName);
 					
 				}
+				
+				
+				
 				//below begin to forward the subscription to other servers.
 				if(forwarded==false){
 					if(!serverList.isEmpty()){
@@ -182,10 +193,19 @@ public class Subscrible {
 							String tempIP = hostAndPortTemp[0];
 							Integer tempPort = Integer.parseInt(hostAndPortTemp[1]);
 
-							if(!InetAddress.getLocalHost().getHostAddress().equals(tempIP)){
-									Future<Integer> hitCount = executorServiceForward.submit(new WaitSubRelayResponse(input, 
-										tempIP, tempPort,clientHost, clientPort, id));
-									relayHitCounter += hitCount.get();	
+							try {
+								if(!InetAddress.getLocalHost().getHostAddress().equals(tempIP)){
+									WaitSubRelay2 relay2 = new WaitSubRelay2(input, tempIP, tempPort, out, id, relayHitCounter);
+									relay2.run();
+									
+								/*	Future<Integer> hitCount = executorServiceForward.submit(new WaitSubRelayResponse(input, 
+											tempIP, tempPort,out, id));
+										//Future返回如果没有完成，则一直循环等待，直到Future返回完成
+										while(!hitCount.isDone());
+										relayHitCounter += hitCount.get();	*/
+								}
+							} catch (Exception e) {
+								e.printStackTrace();
 							}		
 						}
 					} 
@@ -202,10 +222,18 @@ public class Subscrible {
 								String tempIP = hostAndPortTemp[0];
 								Integer tempPort = Integer.parseInt(hostAndPortTemp[1]);
 
-								if(!InetAddress.getLocalHost().getHostAddress().equals(tempIP)){
-										Future<Integer> hitCount = executorServiceForward.submit(new WaitSubRelayResponse(input, 
-											tempIP, tempPort,clientHost, clientPort, id));
-										relayHitCounter += hitCount.get();	
+								try {
+									if(!InetAddress.getLocalHost().getHostAddress().equals(tempIP)){
+											/*Future<Integer> hitCount = executorServiceForward.submit(new WaitSubRelayResponse(input, 
+												tempIP, tempPort,out, id));
+											//Future返回如果没有完成，则一直循环等待，直到Future返回完成
+											while(!hitCount.isDone());
+											relayHitCounter += hitCount.get();	*/
+										WaitSubRelay2 relay2 = new WaitSubRelay2(input, tempIP, tempPort, out, id, relayHitCounter);
+										relay2.run();
+									}
+								} catch (Exception e) {
+									e.printStackTrace();
 								}		
 						}
 						newServers.clear();
@@ -241,7 +269,7 @@ public class Subscrible {
 //								ServerSocket serverSocket, ArrayList<String> serverList, boolean hasDebugOption));
 						
 					//if unsubscription have been sent, then wait 1300ms to receive resultSizes from server to be responded.
-					else if ((isUnsubscribe==true)&&(unsubscriptionForwarded==true)&&swatch.getTime()>1300) {
+					if ((isUnsubscribe==true)&&(unsubscriptionForwarded==true)&&swatch.getTime()>1300) {
 						JSONObject jsonObject = new JSONObject();
 						System.out.println("hits from local servers"+Subscrible.matchList.size()+"total hits from other servers"+relayHitCounter);
 						jsonObject.put("resultSize", Subscrible.matchList.size()+relayHitCounter);
@@ -254,16 +282,9 @@ public class Subscrible {
 				} catch (Exception e) {
 					
 				}
-				
-				//////////////////////////////////////////////////////////////above edited by ruan//////////////////////////////////////////////////////////////
 			}
 			
-			
-			
-			
-			
 		}
-		
 		
 		
 		

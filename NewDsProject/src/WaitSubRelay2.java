@@ -1,40 +1,32 @@
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.net.Socket;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.Callable;
-
-import javax.xml.crypto.Data;
 
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 
-/**this class is used to monitor if received unsubscribe command */
+public class WaitSubRelay2 implements Runnable{
 
-public class WaitSubRelayResponse implements Callable<Integer>{
 	String id;
 	String host;
 	int port;
 	DataOutputStream clientOut;
 	JSONObject subscribeRequest;
 	boolean isUnsubscribe = false;
+	int relayHitCounter;
 	
-	
-	public WaitSubRelayResponse(JSONObject subscribeRequest, String host, int port, 
-			DataOutputStream clientOut,String id) {
-		
+	public WaitSubRelay2(JSONObject subscribeRequest, String host, int port, 
+			DataOutputStream clientOut,String id, int relayHitCounter ) {
 		this.subscribeRequest = subscribeRequest;
 		this.host = host;
-		this.port = port;
 		this.id = id;
 		this.clientOut = clientOut;
+		this.relayHitCounter = relayHitCounter;
+		
 	}
 	
-	
-	
 	@Override
-	public Integer call() {
+	public void run() {
 		int hitCount = 0;
 		try {
 			//set server socket to connect to.
@@ -52,33 +44,19 @@ public class WaitSubRelayResponse implements Callable<Integer>{
 					
 					while(!message.containsKey("resultSize")){
 						clientOut.writeUTF(message.toJSONString());
-					}
-					hitCount = Integer.parseInt(message.get("resultSize").toString());
-					break;
-					/*if (!message.get("resultSize").toString().equals(null)) {
-						hitCount = Integer.parseInt(message.get("resultSize").toString());
-						break;
-					}
-					if (!message.get("name").toString().equals(null)){//这样就能确定是resource了吗？？
-						//set the client socket to connect to.
-						Socket clientSocket = new Socket(clientHost,clientPort);
-						DataOutputStream clientOut = new DataOutputStream(clientSocket.getOutputStream());
-						clientOut.writeUTF(message.toJSONString());
 						clientOut.flush();
 					}
-					if(message.get("name").toString().equals("error")){
-						System.out.println(message.toJSONString());
-						//other situation:error
-					}*/
+					hitCount = Integer.parseInt(message.get("resultSize").toString());
+					relayHitCounter = relayHitCounter+hitCount;
+					break;
 				}
 			}
+			
+			Thread.yield();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		return hitCount;
 		
 	}
-	
+
 }
-
-
