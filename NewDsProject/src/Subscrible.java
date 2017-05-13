@@ -33,7 +33,7 @@ public class Subscrible {
 	boolean hasDebugOption;
 	ArrayList<JSONObject> matchList;
 	int hitCounter;
-	static int relayHitCounter;
+	volatile static int  relayHitCounter;
 	
 	public Subscrible(HashMap<String, Resource> resources,ArrayList<String> serverList, DataInputStream in,DataOutputStream out,boolean hasDebugOption){
 		this.resources = resources;
@@ -130,7 +130,7 @@ public class Subscrible {
 						jsonObject.put("resultSize", Subscrible.matchList.size());
 						out.writeUTF(jsonObject.toJSONString());		
 						out.flush();
-						Thread.currentThread().yield();
+						Thread.yield();
 						break;
 					}
 				} catch (Exception e) {
@@ -223,16 +223,30 @@ public class Subscrible {
 				try {
 					isUnsubscribe = unsubscribe.get();
 					if (isUnsubscribe) {
-						//remove the {"id":xxx} or {"resposne":"success"}
-						Subscrible.matchList.remove(0);
 						
-						JSONObject jsonObject = new JSONObject();
-						System.out.println("hits from local servers"+Subscrible.matchList.size()+"total hits from other servers"+relayHitCounter);
-						jsonObject.put("resultSize", Subscrible.matchList.size()+relayHitCounter);
-						out.writeUTF(jsonObject.toJSONString());		
-						out.flush();
-						Thread.yield();
-						break;
+						StopWatch watch = new StopWatch();
+						watch.start();
+						
+						/*这里让下面的代码暂停0.5秒再执行，以免WaitRelay2中对relayHitCounter的操作还没更新
+						 * 而下面代码已经将relayHitCounter发送走了。
+						 * */
+						if (watch.getTime()>500) {
+							watch.stop();
+							//remove the {"id":xxx} or {"resposne":"success"}
+							Subscrible.matchList.remove(0);
+							
+							JSONObject jsonObject = new JSONObject();
+							System.out.println("hits from local servers"+Subscrible.matchList.size()+"total hits from other servers"+relayHitCounter);
+							
+							jsonObject.put("resultSize", Subscrible.matchList.size()+relayHitCounter);
+							out.writeUTF(jsonObject.toJSONString());		
+							out.flush();
+							Thread.yield();
+							break;
+						}
+						
+						
+						
 					}
 				} catch (Exception e) {
 					

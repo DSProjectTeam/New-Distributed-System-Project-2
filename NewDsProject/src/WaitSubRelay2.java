@@ -33,6 +33,7 @@ public class WaitSubRelay2 implements Runnable{
 	
 	@Override
 	public void run() {
+		Thread.currentThread().setPriority(Thread.MAX_PRIORITY);
 		
 		//这里也使用IsSubscribe来监听unsubscribe
 		ExecutorService executorService = Executors.newFixedThreadPool(1);
