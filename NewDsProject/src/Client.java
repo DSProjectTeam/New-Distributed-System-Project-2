@@ -43,6 +43,7 @@ public class Client {
 	public static int port = 3781;
 	public static String commandType;
 	public static boolean hasDebugOption;
+	public static boolean hasSecureOption;
 	private static boolean enterDetected;
 	public static String id = "";
 
@@ -54,6 +55,7 @@ public class Client {
 		try {
 			commandType = "";
 			hasDebugOption = false;
+			hasSecureOption = false;
 			JSONObject userInput = handleClientInput(args);
 			StopWatch swatch = new StopWatch();
 			//set socket to connect to.
@@ -173,6 +175,19 @@ public class Client {
 	    		break;
 			}
 		}
+		//if input contain "-secure", modify the args[] to better use options
+		for(int i=0;i<args.length;i++){
+			if(args[i].equals("-secure")){
+			hasSecureOption=true;
+	    		String[] argsWithSecure = new String[args.length+1];
+	    		argsWithSecure[i+1] = "";
+	    		System.arraycopy(args, 0, argsWithSecure, 0, i+1);
+	    		System.arraycopy(args, i+1, argsWithSecure, i+2, args.length-1-i);
+	    		args = new String [args.length+1];
+	    		System.arraycopy(argsWithSecure, 0, args, 0, argsWithSecure.length);
+	    		break;
+			}
+		}
 
 		String command = "";
 		String name = "";
@@ -202,6 +217,7 @@ public class Client {
 	    options.addOption("host",true, "input host");
 	    options.addOption("port",true, "input port");
 	    options.addOption("id",true, "id");
+	    options.addOption("secure",true, "secure");
 	    
 	    CommandLineParser parser = new DefaultParser();
 	    CommandLine cmd = null;
@@ -308,6 +324,10 @@ public class Client {
 			Random random = new Random();
 			id = RandomStringUtils.randomNumeric(5);
 		   }
+	    
+	    if(cmd.hasOption("secure")){
+		       hasSecureOption = true;
+		   } 
 	    
 	    if(cmd.hasOption("command")){
 	        command = cmd.getOptionValue("command");
