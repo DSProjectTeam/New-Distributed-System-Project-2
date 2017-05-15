@@ -10,6 +10,9 @@ import java.util.Scanner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.net.ssl.SSLSocket;
+import javax.net.ssl.SSLSocketFactory;
+
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
@@ -41,6 +44,7 @@ public class Client {
 	public static String host2 = "192.168.1.110";
 //	public static String host = "10.12.187.20";
 	public static int port = 3781;
+	public static int sport = 3781;
 	public static String commandType;
 	public static boolean hasDebugOption;
 	public static boolean hasSecureOption;
@@ -58,12 +62,32 @@ public class Client {
 			hasSecureOption = false;
 			JSONObject userInput = handleClientInput(args);
 			StopWatch swatch = new StopWatch();
-			//set socket to connect to.
-			Socket socket = new Socket(host,port);
+			SSLSocket sslsocket = null;
+			Socket socket = null;
+			DataInputStream in;
+			DataOutputStream out;
 			
-			DataOutputStream out = new DataOutputStream(socket.getOutputStream());
+			//set socket to connect to. If input contains secure flag, use secure socket.
+			if(hasSecureOption){
+				//Location of the Java keystore file containing the collection of 
+				//certificates trusted by this application (trust store).
+				System.setProperty("javax.net.ssl.trustStore", "clientKeyStore/myGreatName");
+				//Create SSL socket and connect it to the remote server 
+				SSLSocketFactory sslsocketfactory = (SSLSocketFactory) SSLSocketFactory.getDefault();
+				sslsocket = (SSLSocket) sslsocketfactory.createSocket(host, sport);
+				out = new DataOutputStream(sslsocket.getOutputStream());
+				in = new DataInputStream(sslsocket.getInputStream());
+			}
+			else{// no secure flag, create insecure socket.
+				socket = new Socket(host,port);
+				out = new DataOutputStream(socket.getOutputStream());
+				in = new DataInputStream(socket.getInputStream());
+			}
+			
+			//send userInput to server in JSON format.
 			out.writeUTF(userInput.toJSONString());
 			out.flush();
+			
 			//print part of debug information.
 			System.out.println("command sent to server: "+userInput.toJSONString());
 			if(hasDebugOption){
@@ -72,7 +96,7 @@ public class Client {
 				System.out.println("SENT: "+userInput.toJSONString());
 			}
 			
-			DataInputStream in = new DataInputStream(socket.getInputStream());
+			//while ENTER not pressed, listen for incoming response from server.
 			switch(commandType){
 			case "-subscribe": 
 				enterDetected = false;
@@ -131,10 +155,7 @@ public class Client {
 					}
 				}
 				break;
-			
-			
 			}
-			
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -216,8 +237,8 @@ public class Client {
 	    options.addOption("debug",true, "input debug");
 	    options.addOption("host",true, "input host");
 	    options.addOption("port",true, "input port");
-	    options.addOption("id",true, "id");
-	    options.addOption("secure",true, "secure");
+	    options.addOption("id",true, "input id");
+	    options.addOption("secure",true, "input secure");
 	    
 	    CommandLineParser parser = new DefaultParser();
 	    CommandLine cmd = null;
