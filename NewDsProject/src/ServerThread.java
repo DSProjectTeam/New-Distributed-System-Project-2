@@ -17,6 +17,8 @@ import java.util.HashMap;
 import java.util.regex.Pattern;
 
 import javax.management.Query;
+import javax.net.ssl.SSLServerSocket;
+import javax.net.ssl.SSLSocket;
 import javax.xml.ws.Response;
 
 import org.json.simple.JSONObject;
@@ -51,7 +53,15 @@ public class ServerThread extends Thread{
 	
 	public ServerSocket serverSocket;
 	
+	public SSLSocket sslClientSocket;
+	
+	SSLServerSocket sslServerSocket;
+	
 	private ArrayList<String> serverList;
+	
+	private ArrayList<String> secureServerList;
+	
+	public boolean isSecurePort;
 	
 	public FetchResult fetchResult;
 	
@@ -63,8 +73,10 @@ public class ServerThread extends Thread{
 	
 	public ArrayList<String> subscriberList;
 	
+	
+	//thread handles unsecured connection
 	public ServerThread(Socket socket, HashMap<String, Resource> resources, String secret, ServerSocket serverSocket,
-			ArrayList<String> serverList, boolean hasDebugOption, int interval, String ServerHostName){
+			ArrayList<String> serverList, boolean hasDebugOption, int interval, String ServerHostName, boolean isSecurePort){
 		//try {
 			this.clientSocket = socket;
 			this.resources = resources;	
@@ -81,6 +93,7 @@ public class ServerThread extends Thread{
 			this.hasDebugOption = hasDebugOption;
 			this.interval = interval;
 			this.hostName = ServerHostName;
+			this.isSecurePort = isSecurePort;
 			
 			/**set interval limit*//*
 			new Timer().scheduleAtFixedRate(new TimerTask() {
@@ -110,6 +123,30 @@ public class ServerThread extends Thread{
 		}*/
 	}
 	
+	
+	/**thread for secure connection*/
+	public ServerThread(SSLSocket sslClientSocket, HashMap<String, Resource> resources, String secret, SSLServerSocket sslServerSocket,
+			ArrayList<String> serverList, ArrayList<String> secureServerList,boolean hasDebugOption, int interval, String ServerHostName,
+			boolean isSecurePort){
+		
+			this.sslClientSocket = sslClientSocket;
+			this.sslServerSocket = sslServerSocket;
+			this.resources = resources;	
+			this.secret = secret;
+			try {
+				this.output = new DataOutputStream(sslClientSocket.getOutputStream());
+				this.input = new DataInputStream(sslClientSocket.getInputStream());
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			this.secureServerList = secureServerList;
+			this.serverList = serverList;
+			this.hasDebugOption = hasDebugOption;
+			this.interval = interval;
+			this.hostName = ServerHostName;
+			this.isSecurePort = isSecurePort;
+	}
 	
 	
 	@Override

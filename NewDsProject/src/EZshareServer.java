@@ -11,6 +11,11 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Timer;
 import java.util.concurrent.ScheduledExecutorService;
+
+import javax.net.ssl.SSLServerSocket;
+import javax.net.ssl.SSLServerSocketFactory;
+import javax.net.ssl.SSLSocket;
+
 import org.json.simple.*;
 import java.util.Random;
 import java.io.DataOutputStream;
@@ -30,30 +35,45 @@ public class EZshareServer {
 	public HashMap<String, Resource> resources;
 	/*public String secret = "12345678";*/
 	
-	public ArrayList<String> serverList;
+	//serverList store unsecure server list;
+	public ArrayList<String> serverList;	
+	//store secure server list;
+	public ArrayList<String> secureServerList;
+	
 	public static String commandType;
 	public static boolean hasDebugOption = false;
 	public static String command = "";
 	public static String hostName = "";
 	public static int connectionintervallimit;
 	public static int port = 3780;
+	public static int sport = 3781;
 	public static String secret = "";
 	public static int exchangeInterval = 0;
+	public boolean isSecure;
+	public static boolean isSecurePort = false;
 	static HashMap connectionInterval = new HashMap<Socket,java.util.Date>();
 	
-	public EZshareServer(){};
+	/**Constructor for secure connection EZshareServer*/
+	public EZshareServer(boolean isSecure){
+		this.resources = new HashMap<String, Resource>();
+		this.serverList = new ArrayList<String>();
+		this.secureServerList = new ArrayList<String>();
+		this.isSecure = isSecure;
+	};
 	
-	public EZshareServer(int serverPort) {
+	public EZshareServer(int serverPort,boolean isSecure) {
 		try {
 			this.server  = new ServerSocket(serverPort);
 			this.resources = new HashMap<String, Resource>();
 			this.serverList = new ArrayList<String>();
+			this.isSecure = isSecure;
 		} catch (Exception e) {
 			e.printStackTrace();
 			System.exit(-1);
 		}
 		
 	}
+	
 	
 	/**
 	 * This method handles input commands on server.
@@ -75,6 +95,8 @@ public class EZshareServer {
 			}
 		}
 		
+
+		
 		//define server command options.
 		Options options = new Options();
 		options.addOption("exchangeinterval",true,"input exchange interval"); 
@@ -83,6 +105,8 @@ public class EZshareServer {
 	    options.addOption("connectionintervallimit",true, "input interval");
 	    options.addOption("secret",true, "input secret");
 	    options.addOption("debug",true,"debug option");
+	    options.addOption("sport",true,"input secure port number");
+	    
 	    
 	    CommandLineParser parser = new DefaultParser();
 	    CommandLine cmd = null;
@@ -130,6 +154,11 @@ public class EZshareServer {
 	    	connectionintervallimit = 1000;
 	    }
 	    
+	    //secure port option
+	    if(cmd.hasOption("sport")){
+	    	sport = Integer.parseInt(cmd.getOptionValue("sport"));
+	    	isSecurePort = true;
+	    }
 	    
 	}
 	
@@ -163,44 +192,113 @@ public class EZshareServer {
 	public static void initializeServer(){
 		try {
 			/**add server itself in the serverlist for exchange interaction*/
-			EZshareServer eZshareServer = new EZshareServer(port);
-			String localHost = InetAddress.getLocalHost().getHostAddress();
-			Integer port = eZshareServer.port;
-			String localPort = port.toString();
-			eZshareServer.serverList.add(localHost+":"+localPort);
-		
-			/**every 10 mins(by default), contact a randomly selected server in the server list*/
-			Timer timer = new Timer();		
-			timer.schedule(new ExchangeTask(eZshareServer,hasDebugOption), exchangeInterval,exchangeInterval);
 			
-			int count = 0;
-			long temp=0;
-			while(true){
-				Socket client = EZshareServer.server.accept();
-				java.util.Date currentTime = new java.util.Date();
+			if(isSecurePort){
+				//Secure port initiated, only received secure connection
 				
-				/*handle interval limit*/
-				long threadTime = currentTime.getTime();
-				count = count +1;
-				System.out.println("client "+count+" applying for connection");
-				if(count!=1){
-					if(threadTime-temp<connectionintervallimit){
-						System.out.println("violate interval limit");
-						temp = threadTime;
-					}else {
+				//keystore contains our own certificate and private key
+				System.setProperty("javax.net.ssl.keyStore","serverKeystore/aGreatName");
+				
+				//password to access the private key from the keystore file
+				System.setProperty("javax.net.ssl.keyStorePassword", "12345678");
+				
+				// Enable debugging to view the handshake and communication which happens between the SSLClient and the SSLServer
+				System.setProperty("javax.net.debug","all");
+				
+				EZshareServer eZshareServer = new EZshareServer(isSecurePort);
+				
+				
+				try{
+					SSLServerSocketFactory sslserversocketfactory = (SSLServerSocketFactory) SSLServerSocketFactory
+							.getDefault();
+					SSLServerSocket sslServerSocket = (SSLServerSocket) sslserversocketfactory.createServerSocket(sport);
+					
+					Integer localPort = sport;
+					String localHost = InetAddress.getLocalHost().getHostAddress();
+					eZshareServer.secureServerList.add(localHost+":"+localPort.toString());
+					
+					/**every 10 mins(by default), contact a randomly selected server in the server list*/
+					Timer timer = new Timer();		
+					timer.schedule(new ExchangeTask(eZshareServer,hasDebugOption), exchangeInterval,exchangeInterval);
+					
+					int count = 0;
+					long temp=0;
+					while(true){
+						SSLSocket sslClientSocket = (SSLSocket) sslServerSocket.accept();
+						java.util.Date currentTime = new java.util.Date();
+						
+						/*handle interval limit*/
+						long threadTime = currentTime.getTime();
+						count = count +1;
+						System.out.println("client "+count+" applying for connection");
+						if(count!=1){
+							if(threadTime-temp<connectionintervallimit){
+								System.out.println("violate interval limit");
+								temp = threadTime;
+							}else {
+								ServerThread thread = new ServerThread(sslClientSocket, eZshareServer.resources, eZshareServer.secret, sslServerSocket,
+										eZshareServer.serverList, eZshareServer.hasDebugOption, connectionintervallimit,hostName,eZshareServer.isSecure);
+								thread.start();
+								temp = threadTime;
+							}
+						}else{
+							ServerThread thread = new ServerThread(sslClientSocket, eZshareServer.resources, eZshareServer.secret, sslServerSocket,
+									eZshareServer.serverList, eZshareServer.hasDebugOption, connectionintervallimit,hostName,eZshareServer.isSecure);
+							thread.start();
+							temp = threadTime;
+						}
+							
+					}
+					
+				
+				} catch (Exception exception) {
+					exception.printStackTrace();
+				}
+				
+			}else{
+				//Unsecured port established
+				EZshareServer eZshareServer = new EZshareServer(port,isSecurePort);
+				
+				String localHost = InetAddress.getLocalHost().getHostAddress();
+				Integer port = eZshareServer.port;
+				String localPort = port.toString();
+				eZshareServer.serverList.add(localHost+":"+localPort);
+			
+				/**every 10 mins(by default), contact a randomly selected server in the server list*/
+				Timer timer = new Timer();		
+				timer.schedule(new ExchangeTask(eZshareServer,hasDebugOption), exchangeInterval,exchangeInterval);
+				
+				int count = 0;
+				long temp=0;
+				while(true){
+					Socket client = EZshareServer.server.accept();
+					java.util.Date currentTime = new java.util.Date();
+					
+					/*handle interval limit*/
+					long threadTime = currentTime.getTime();
+					count = count +1;
+					System.out.println("client "+count+" applying for connection");
+					if(count!=1){
+						if(threadTime-temp<connectionintervallimit){
+							System.out.println("violate interval limit");
+							temp = threadTime;
+						}else {
+							ServerThread thread = new ServerThread(client, eZshareServer.resources, eZshareServer.secret, eZshareServer.server,
+									eZshareServer.serverList, eZshareServer.hasDebugOption, connectionintervallimit,hostName,eZshareServer.isSecure);
+							thread.start();
+							temp = threadTime;
+						}
+					}else{
 						ServerThread thread = new ServerThread(client, eZshareServer.resources, eZshareServer.secret, eZshareServer.server,
-								eZshareServer.serverList, eZshareServer.hasDebugOption, connectionintervallimit,hostName);
+								eZshareServer.serverList, eZshareServer.hasDebugOption, connectionintervallimit,hostName,eZshareServer.isSecure);
 						thread.start();
 						temp = threadTime;
 					}
-				}else{
-					ServerThread thread = new ServerThread(client, eZshareServer.resources, eZshareServer.secret, eZshareServer.server,
-							eZshareServer.serverList, eZshareServer.hasDebugOption, connectionintervallimit,hostName);
-					thread.start();
-					temp = threadTime;
+						
 				}
-					
 			}
+			
+			
 			
 		} catch (Exception e) {
 			e.printStackTrace();
