@@ -348,7 +348,12 @@ public class ServerThread extends Thread{
 					portList_exchange.add(port);
 					serverList_exchange.add(hostnameAndPort);
 				}
-				sendResponse = ServerHandler.handlingExchange(serverList, serverList_exchange, hostnameList_exchange, portList_exchange);
+				if(isSecurePort){
+					sendResponse = ServerHandler.handlingExchange(secureServerList, serverList_exchange, hostnameList_exchange, portList_exchange);
+				}
+				else{
+					sendResponse = ServerHandler.handlingExchange(serverList, serverList_exchange, hostnameList_exchange, portList_exchange);
+				}
 				sendMessage(sendResponse);
 				break;
 			default:				

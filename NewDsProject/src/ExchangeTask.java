@@ -9,6 +9,9 @@ import java.util.ArrayList;
 import java.util.Random;
 import java.util.TimerTask;
 
+import javax.net.ssl.SSLSocket;
+import javax.net.ssl.SSLSocketFactory;
+
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -29,16 +32,20 @@ public class ExchangeTask extends TimerTask{
 	
 	@Override
 	public void run() {
-		exchangeWithOtherServer(this.eZshareServer.serverList,this.eZshareServer );
+		exchangeWithOtherServer(this.eZshareServer.serverList, this.eZshareServer.secureServerList, this.eZshareServer );
 		//System.out.println(this.eZshareServer.serverList.size());
 	}
 
 	/**
-	 * This method takes the work of select a random server from the serverList saved on server,
-	 * then establish connection to that selected server and sent it the serverList
+	 * This method takes the work of select a random server from the serverList and one secure 
+	 * server from the secureServerList saved on server, then establish connection to the two 
+	 * selected server and sent them the serverList/secureServerList
 	 * @param serverList
+	 * @param secureServerList
+	 * @param eZshareServer
 	 */
-	public synchronized static void exchangeWithOtherServer(ArrayList<String> serverList,EZshareServer eZshareServer ){
+	public synchronized static void exchangeWithOtherServer(ArrayList<String> serverList, ArrayList<String> secureServerList, 
+			EZshareServer eZshareServer ){
 
 		/*when serverList is not empty, convert the serverList into JSON object.*/
 	    if(!serverList.isEmpty()){
@@ -54,7 +61,7 @@ public class ExchangeTask extends TimerTask{
 		       exchangeOutput.put(ConstantEnum.CommandType.command.name(),"EXCHANGE");
 		       exchangeOutput.put(ConstantEnum.CommandArgument.serverList.name(),serversJSONArray); 
 		       
-		       //randomly select server.
+		       //randomly select a insecure server.
 		       Random randomGenerator = new Random();
 		       int randomIndex = randomGenerator.nextInt(serverList.size());
 		       String[] randomHostnameAndPort = serverList.get(randomIndex).split(":");
@@ -63,7 +70,7 @@ public class ExchangeTask extends TimerTask{
 		       
 		       //send the JSON message of serverList to the selected server
 		       try {
-		    	   /**not send exchange to the server itself*/
+		    	   /**not send exchange to the insecure server itself*/
 		    	   if(!randomHostname.equals(InetAddress.getLocalHost().getHostAddress())){
 		    		   Socket socket = new Socket(randomHostname,randomPort);
 			    	    DataOutputStream out = new DataOutputStream(socket.getOutputStream());
@@ -72,7 +79,7 @@ public class ExchangeTask extends TimerTask{
 						if(hasDebugOption){
 							System.out.println("SENT: "+exchangeOutput.toJSONString());
 						}
-						System.out.println("command sent to server: "+exchangeOutput.toJSONString());
+						System.out.println("command sent to insecure server: "+exchangeOutput.toJSONString());
 		    	   }
 		    	    
 					/*it's not specified in the instruction if we should handle the exchange messages 
@@ -116,15 +123,66 @@ public class ExchangeTask extends TimerTask{
 				e.printStackTrace();
 			}*/ }catch (ConnectException e) {
 				serverList.remove(randomIndex);
-				System.out.println("The server is not reachable, so it has been removed from serverList");
+				System.out.println("The insecure server is not reachable, so it has been removed from serverList");
 			}catch (IOException e) {
 				e.printStackTrace();
-			}
-		       
-		//error message when the serverList on server is empty.
-		 }else{
-			 System.out.println("empty server list");
+			}    
 		 }
+	    else{
+			 System.out.println("empty insecure server list");
+		}       
+		       
+		       
+	    
+		/*when secureServerList is not empty, convert the secureServerList into JSON object.*/
+	    if(!secureServerList.isEmpty()){
+	    		   JSONObject secureExchangeOutput = new JSONObject();
+	    		   JSONArray secureServersJSONArray = new JSONArray();
+		       for (int i=0; i<secureServerList.size(); i++){
+		    	   		JSONObject temp = new JSONObject();
+		    	   		String[] hostnameAndPort = secureServerList.get(i).split(":");
+		    	   		temp.put("hostname", hostnameAndPort[0]);
+		    	   		temp.put("port", hostnameAndPort[1]);  
+		    	   		secureServersJSONArray.add(temp);
+		       }
+		       secureExchangeOutput.put(ConstantEnum.CommandType.command.name(),"EXCHANGE");
+		       secureExchangeOutput.put(ConstantEnum.CommandArgument.serverList.name(),secureServersJSONArray); 
+		       
+		       //randomly select a secure server.
+		       Random randomGenerator = new Random();
+		       int randomIndexSecure = randomGenerator.nextInt(secureServerList.size());
+		       String[] randomHostnameAndPortSecure = secureServerList.get(randomIndexSecure).split(":");
+		       String randomHostnameSecure = randomHostnameAndPortSecure[0];
+		       int randomPortSecure = Integer.parseInt(randomHostnameAndPortSecure[1]);
+		      
+		       //send the JSON message of serverList to the selected secure server
+		       try {
+		    	   /**not send exchange to the server itself*/
+		    	   if(!randomHostnameSecure.equals(InetAddress.getLocalHost().getHostAddress())){
+						//Location of the Java keystore file containing the collection of 
+						//certificates trusted by this application (trust store).
+						System.setProperty("javax.net.ssl.trustStore", "clientKeyStore/myGreatName");//waiting to be changed....
+						//Create SSL socket and connect it to the remote server 
+						SSLSocketFactory sslsocketfactory = (SSLSocketFactory) SSLSocketFactory.getDefault();
+						SSLSocket sslsocket = (SSLSocket) sslsocketfactory.createSocket(randomHostnameSecure,randomPortSecure);
+						DataOutputStream out = new DataOutputStream(sslsocket.getOutputStream());
+						out.writeUTF(secureExchangeOutput.toJSONString());
+						out.flush();
+						if(hasDebugOption){
+							System.out.println("SENT: "+secureExchangeOutput.toJSONString());
+						}
+						System.out.println("command sent to secure server: "+secureExchangeOutput.toJSONString());
+		    	   }
+		       }catch (ConnectException e) {
+				secureServerList.remove(randomIndexSecure);
+				System.out.println("The selected secure server is not reachable, so it has been removed from secureServerList");
+			}catch (IOException e) {
+				e.printStackTrace();
+			}     
+		//error message when the serverList on server is empty.
+	    }else{
+	    	System.out.println("empty secure server list");
+	    }
 	}
 	
 }
