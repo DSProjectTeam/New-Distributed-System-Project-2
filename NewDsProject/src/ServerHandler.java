@@ -12,6 +12,8 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.regex.Pattern;
 
+import javax.net.ssl.SSLSocket;
+import javax.net.ssl.SSLSocketFactory;
 import javax.swing.OverlayLayout;
 
 import org.apache.commons.lang3.time.StopWatch;
@@ -581,7 +583,6 @@ public class ServerHandler {
 		ArrayList<JSONObject> returnList = new ArrayList<>();
 		QueryReturn queryReturn;
 		JSONObject serverResponse = new JSONObject();
-		
 
 		/**Regexp for filePath*/
 		String filePathPattern = "((\\w+\\/)+)+(\\w+.\\w+)";
@@ -941,10 +942,7 @@ public class ServerHandler {
 											otherReturn = new QueryData(false, errorOutcome);
 											
 										}	
-									
-										
-										
-											
+															
 													
 										} catch (Exception e) {
 											
@@ -962,18 +960,14 @@ public class ServerHandler {
 				return otherReturn;
 			}
 	
-//////////////////////////////////////////////////below copied and edited by zizhe/////////////////////////////////////////////
-	/**
-	 * This method creates the JSON object to be returned to client, in response to Query command with Relay field set as TRUE.
-	 * @param inputMessage
-	 * @param resources
-	 * @param serverSocket
-	 * @param serverList
-	 * @param hasDebugOption
-	 * @return the JSON object to be returned to client
-	 */
-	public synchronized static QueryData handlingSubscribeWithRelay(String inputMessage,HashMap<String, Resource> resources, 
-			ServerSocket serverSocket, ArrayList<String> serverList, boolean hasDebugOption){
+	
+	/**secure query operation with relay*/
+	public synchronized static QueryData handlingSecureQueryWithRelay(String inputMessage,HashMap<String, Resource> resources, 
+			ServerSocket serverSocket, ArrayList<String> secureServerList, boolean hasDebugOption){
+			
+			System.setProperty("java.net.ssl.trustStore", "clientKeystore/aGreatName");
+			SSLSocketFactory sslSocketFactory = (SSLSocketFactory) SSLSocketFactory.getDefault();
+			
 			JSONObject inputQuerry = new JSONObject();
 			ArrayList<JSONObject> arrayList = new ArrayList<>();
 			QueryData otherReturn = new QueryData();
@@ -983,14 +977,17 @@ public class ServerHandler {
 			try {
 				JSONParser parser = new JSONParser();
 				inputQuerry = (JSONObject) parser.parse(inputMessage);
-				
+				JSONObject object = (JSONObject) inputQuerry.get("resourceTemplate");
+				object.put("channel", "");
+				object.put("owner", "");
+				inputQuerry.put("resourceTemplate", object);
 			} catch (org.json.simple.parser.ParseException e) {
 				e.printStackTrace();
 			}
 			
 			/**replace owner, channel with"" and set relay with true, then forward query*/
 			
-			inputQuerry.put("channel", "");////////////////////////////////need fix/////////////////////////////////////////
+			//inputQuerry.put("channel", "");
 			/*inputQuerry.put("owner", "");*/
 			inputQuerry.put("relay", "false");
 					
@@ -998,9 +995,9 @@ public class ServerHandler {
 			ArrayList<JSONObject> successOutcome = new ArrayList<>();
 			ArrayList<JSONObject> errorOutcome = new ArrayList<>();			
 			
-			if(!serverList.isEmpty()){
+			if(!secureServerList.isEmpty()){
 			
-					for(String server: serverList){
+					for(String server: secureServerList){
 						
 						String[] hostAndPortTemp = server.split(":");
 						String tempIp = hostAndPortTemp[0];
@@ -1009,9 +1006,10 @@ public class ServerHandler {
 							/**not query server itself while relay is true*/
 							if(!InetAddress.getLocalHost().getHostAddress().equals(tempIp)){
 								try {
-									Socket otherServer = new Socket(tempIp, tempPort);
-									DataInputStream inputStream = new DataInputStream(otherServer.getInputStream());
-									DataOutputStream outputStream = new DataOutputStream(otherServer.getOutputStream());
+									//create SSL socket for connection
+									SSLSocket sslSocket = (SSLSocket)sslSocketFactory.createSocket(tempIp, tempPort);
+									DataInputStream inputStream = new DataInputStream(sslSocket.getInputStream());
+									DataOutputStream outputStream = new DataOutputStream(sslSocket.getOutputStream());
 									outputStream.writeUTF(inputQuerry.toJSONString());
 									outputStream.flush();
 									if(hasDebugOption){
@@ -1033,37 +1031,38 @@ public class ServerHandler {
 											arrayList.add((JSONObject)parser2.parse(otherServerResponse));
 											
 											if(otherResponse.containsKey("resultSize")||otherResponse.containsKey("errorMessage")){
-												if (arrayList.get(0).get("response").equals("success")) {
-													hasMatchServer =true;
-													int size = arrayList.size();
-													totalOtehrResSize = totalOtehrResSize+size;
-													
-													for(int i =1; i<size-1;i++){
-														successOutcome.add(arrayList.get(i));
-														
-													}
-													otherReturn = new QueryData(true, successOutcome);
-													
-													
-												}else{
-													int size = arrayList.size();
-													for(int i = 0;i<size;i++){
-														errorOutcome.add(arrayList.get(i));
-													}
-													otherReturn = new QueryData(false, errorOutcome);
-													
-												}	
+												break;
 											}
 											
 										}
-
+										/**other server connected but no response*/
+										if(s.getTime()>500){
+											s.stop();
+											return otherReturn;
+										}
 									}
 									
-
-									
-										
-										
+										if (arrayList.get(0).get("response").equals("success")) {
+											hasMatchServer =true;
+											int size = arrayList.size();
+											totalOtehrResSize = totalOtehrResSize+size;
 											
+											for(int i =1; i<size-1;i++){
+												successOutcome.add(arrayList.get(i));
+												
+											}
+											otherReturn = new QueryData(true, successOutcome);
+											
+											
+										}else{
+											int size = arrayList.size();
+											for(int i = 0;i<size;i++){
+												errorOutcome.add(arrayList.get(i));
+											}
+											otherReturn = new QueryData(false, errorOutcome);
+											
+										}	
+															
 													
 										} catch (Exception e) {
 											
@@ -1081,65 +1080,6 @@ public class ServerHandler {
 				return otherReturn;
 			}
 	
-//////////////////////////////////////////////////above copied and edited by zizhe/////////////////////////////////////////////
-	public synchronized static JSONObject handlingUnsubscribe(ArrayList<String> subscriberList, String id, JSONObject jsonObject,HashMap<String, Resource> resources, 
-			ServerSocket serverSocket, ArrayList<String> serverList, boolean hasDebugOption){
-			JSONObject serverResponse = new JSONObject();
-			String response;
-			String errorMessage;
-			if(subscriberList.isEmpty()){
-				response="failed. the subscriberList is empty";
-				serverResponse.put(ConstantEnum.CommandType.response.name(), response);
-				return serverResponse;
-			}
-			for(int i=0; i<subscriberList.size(); i++){
-				//if contain the id, forward the unsubscribe command to servers in the serverList
-				if(id.equals(subscriberList.get(i))){
-					if(!serverList.isEmpty()){
-						
-						for(String server: serverList){
-							
-							String[] hostAndPortTemp = server.split(":");
-							String tempIp = hostAndPortTemp[0];
-							Integer tempPort = Integer.parseInt(hostAndPortTemp[1]);
-							try {
-								//not forward to the server itself
-								if(!InetAddress.getLocalHost().getHostAddress().equals(tempIp)){
-									try {
-										Socket otherServer = new Socket(tempIp, tempPort);
-										DataInputStream inputStream = new DataInputStream(otherServer.getInputStream());
-										DataOutputStream outputStream = new DataOutputStream(otherServer.getOutputStream());
-										outputStream.writeUTF(jsonObject.toJSONString());
-										outputStream.flush();
-										if(hasDebugOption){
-											System.out.println("SENT: "+jsonObject.toJSONString());
-										}
-										System.out.println("Unsubscribe command sent to other servers");
-		
-											} catch (Exception e) {
-												
-												e.printStackTrace();
-											}
-								}
-									
-								
-							} catch (UnknownHostException e) {
-								// TODO Auto-generated catch block
-								e.printStackTrace();
-							}
-							}
-					} 
-					
-					subscriberList.remove(i);
-					response="id:"+id+" has successfully unsubscribed.";
-					serverResponse.put(ConstantEnum.CommandType.response.name(), response);
-					return serverResponse;//Shouldn't be any return here, just for test
-				}
-			}
-			response=id+" is an invalid id, not found in subscriberList";
-			serverResponse.put(ConstantEnum.CommandType.response.name(), response);
-			return serverResponse;
-		}
-//////////////////////////////////////////////////above handling UNSUBSCRIBE copied and edited by zizhe/////////////////////////////////////////////
+
 
 }

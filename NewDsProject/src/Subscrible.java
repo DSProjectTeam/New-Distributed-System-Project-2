@@ -31,6 +31,7 @@ public class Subscrible {
 	DataInputStream in;
 	DataOutputStream out;
 	boolean hasDebugOption;
+	boolean isSecurePort;
 	ArrayList<JSONObject> matchList;
 	int hitCounter;
 	volatile static int  relayHitCounter;
@@ -47,11 +48,24 @@ public class Subscrible {
 		this.matchList = new ArrayList<>();
 		int hitCounter = 0;
 		this.relayHitCounter = 0;
+		this.isSecurePort = isSecurePort;
+	}
+	
+	
+	public Subscrible(HashMap<String, Resource> resources, DataInputStream in,DataOutputStream out,boolean hasDebugOption){
+		this.resources = resources;
+		this.lastState = new HashMap<>(resources);
+		this.in = in;
+		this.out = out;
+		this.hasDebugOption = hasDebugOption;
+		this.matchList = new ArrayList<>();
+		int hitCounter = 0;
 	}
 	
 	
 	public synchronized static void handlingSubscribleTest(JSONObject input,DataInputStream in,DataOutputStream out,
-			ServerSocket socket,HashMap<String, Resource> resources,String hostName, boolean hasDebugOption, ArrayList<String> serverList){
+			ServerSocket socket,HashMap<String, Resource> resources,String hostName, boolean hasDebugOption, ArrayList<String> serverList,
+			boolean isSecurePort){
 		JSONObject template_resource_sub = (JSONObject)input.get("resourceTemplate");
 		JSONArray debugMsg_sub = new JSONArray();
 		boolean relay;
@@ -79,41 +93,41 @@ public class Subscrible {
 		
 		//loop until receive unsubscribe message
 		if (relay == false) {
-			
+			System.out.println("1");
 			while(isUnsubscribe == false){
 				
 				QueryReturn queryReturn= ServerHandler.handlingSubscribe(id, name, tags, description, uri, channel, owner, relay, resources, socket, hostName);
-				Subscrible Subscrible = new Subscrible(resources,serverList,in,out,hasDebugOption);
-				
+				//Subscrible Subscrible = new Subscrible(resources,serverList,in,out,hasDebugOption);
 				//invalid template or valid template but no current match, pending.
+				Subscrible subscrible = new Subscrible(resources, in, out, hasDebugOption);
 				if (queryReturn.hasMatch==false) {
-					
+					System.out.println("2");
 					//invalid template
 					if (queryReturn.reponseMessage.get("response").toString().equals("error")) {
-						Subscrible.sendMessage(queryReturn.reponseMessage);
+						subscrible.sendMessage(queryReturn.reponseMessage);
 						break;
 					}else{
 						//valid template, but no match currently, pending
 						if (queryReturn.reponseMessage.get("response").toString().equals("pending")) {
-							Subscrible.checkUpdates(id, name, tags, description, uri, channel, owner, relay,socket, hostName);
+							subscrible.checkUpdates(id, name, tags, description, uri, channel, owner, relay,socket, hostName);
 							System.out.println("pending!!");
 						}
 					}
 				}else{
 					//valid template, has match, monitor resources update.
-	
+					System.out.println("3");
 						for(JSONObject jsonObject: queryReturn.returnList){
 							try {
 								out.writeUTF(jsonObject.toJSONString());
 								
 								//put it in the match list to avoid duplicate resource has been sent
-								Subscrible.matchList.add(jsonObject);
+								subscrible.matchList.add(jsonObject);
 							} catch (IOException e) {
 								e.printStackTrace();
 							}
 							
 						}
-						Subscrible.checkUpdates(id, name, tags, description, uri, channel, owner, relay,socket, hostName);
+						subscrible.checkUpdates(id, name, tags, description, uri, channel, owner, relay,socket, hostName);
 					
 				}
 				
@@ -123,14 +137,14 @@ public class Subscrible {
 					isUnsubscribe = unsubscribe.get();
 					if (isUnsubscribe) {
 						//remove the {"id":xxx} or {"resposne":"success"}
-						Subscrible.matchList.remove(0);
+						subscrible.matchList.remove(0);
 						
 						JSONObject jsonObject = new JSONObject();
-						System.out.println(Subscrible.matchList.size());
-						jsonObject.put("resultSize", Subscrible.matchList.size());
+						System.out.println(subscrible.matchList.size());
+						jsonObject.put("resultSize", subscrible.matchList.size());
 						out.writeUTF(jsonObject.toJSONString());		
 						out.flush();
-						Thread.yield();
+						//Thread.yield();
 						break;
 					}
 				} catch (Exception e) {
@@ -190,7 +204,7 @@ public class Subscrible {
 							if(!InetAddress.getLocalHost().getHostAddress().equals(tempIP)){
 								
 								//WaitSubRelay2 现在自己可以监听client端的unsubscribe命令。
-								WaitSubRelay2 relay2 = new WaitSubRelay2(input, tempIP, tempPort, out, id, relayHitCounter,in);
+								WaitSubRelay2 relay2 = new WaitSubRelay2(input, tempIP, tempPort, out, id, relayHitCounter,in,isSecurePort);
 								relay2.run();
 							}
 						} catch (Exception e) {
@@ -209,7 +223,7 @@ public class Subscrible {
 								try {
 									if(!InetAddress.getLocalHost().getHostAddress().equals(tempIP)){
 											
-										WaitSubRelay2 relay2 = new WaitSubRelay2(input, tempIP, tempPort, out, id, relayHitCounter,in);
+										WaitSubRelay2 relay2 = new WaitSubRelay2(input, tempIP, tempPort, out, id, relayHitCounter,in,isSecurePort);
 										relay2.run();
 									}
 								} catch (Exception e) {
@@ -372,7 +386,10 @@ public class Subscrible {
 			@Override
 			public void run() {
 			checkUpdated(id, name, tags, description, uri, channel, owner, relay, socket, hostName);
-			checkUpdatedServer();
+			if (relay==true) {
+				checkUpdatedServer();
+			}
+			
 			}
 		}, 1000, 1000);
 	}
