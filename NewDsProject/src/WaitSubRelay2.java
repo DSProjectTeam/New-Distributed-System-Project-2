@@ -5,6 +5,9 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
+import javax.net.ssl.SSLSocket;
+import javax.net.ssl.SSLSocketFactory;
+
 import org.apache.commons.lang3.time.StopWatch;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -16,19 +19,22 @@ public class WaitSubRelay2 implements Runnable{
 	int port;
 	DataOutputStream clientOutput;
 	DataInputStream clientInput;
+	DataOutputStream out;
+	DataInputStream in;
 	JSONObject subscribeRequest;
 	int relayHitCounter;
 	boolean isUnsubscribe = false;
+	boolean isSecurePort;
 	
 	public WaitSubRelay2(JSONObject subscribeRequest, String host, int port, 
-			DataOutputStream clientOut,String id, int relayHitCounter, DataInputStream clientInput) {
+			DataOutputStream clientOut,String id, int relayHitCounter, DataInputStream clientInput, boolean isSecurePort) {
 		this.subscribeRequest = subscribeRequest;
 		this.host = host;
 		this.id = id;
 		this.clientOutput = clientOut;
 		this.clientInput = clientInput;
 		this.relayHitCounter = relayHitCounter;
-		
+		this.isSecurePort = isSecurePort;
 	}
 	
 	@Override
@@ -43,11 +49,23 @@ public class WaitSubRelay2 implements Runnable{
 		
 
 			try {
-				//set server socket to connect to.
-				Socket socket = new Socket(host,port);
+				//set server socket to connect to secure server
+				if(isSecurePort){
+					System.setProperty("java.net.ssl.trustStore", "clientKeystore/aGreatName");
+					SSLSocketFactory sslSocketFactory = (SSLSocketFactory)SSLSocketFactory.getDefault();
+					SSLSocket sslSocket = (SSLSocket) sslSocketFactory.createSocket(host, port);
+					out = new DataOutputStream(sslSocket.getOutputStream());
+					in = new DataInputStream(sslSocket.getInputStream());
+					
+				}else{
+					//unsecure connection
+					Socket socket = new Socket(host,port);
+					out = new DataOutputStream(socket.getOutputStream());
+					in = new DataInputStream(socket.getInputStream());
+				}
 				
-				DataOutputStream out = new DataOutputStream(socket.getOutputStream());
-				DataInputStream in = new DataInputStream(socket.getInputStream());
+				
+				
 				
 				out.writeUTF(subscribeRequest.toJSONString());
 				out.flush();
