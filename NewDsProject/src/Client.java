@@ -121,7 +121,7 @@ public class Client {
 						}
 						swatch.start();
 						while(true){
-							/*receive the last message of total resultSize and close. 
+							/*receive the last message of total resultSize, then close. 
 							If not received in 1.3s, disconnect.*/
 							if(!hasSecureOption){
 								if(in.available()>0){
@@ -131,12 +131,10 @@ public class Client {
 								}
 							}
 							else{
-								try{
-									String responseMessage = in.readUTF();
+								String responseMessage = null;
+								if((responseMessage = in.readUTF())!=null){
 									handleServerResponse(userInput, responseMessage, in);
 									break;
-								}
-								catch(SocketTimeoutException e){
 								}
 							}
 							if(swatch.getTime()>1300){
@@ -144,7 +142,7 @@ public class Client {
 							}
 						}
 						break;
-					}
+					}//check ENTER ends.
 				//keep open to receive asynchronous responses from server
 				if(!hasSecureOption){
 					if(in.available()>0){
@@ -153,11 +151,9 @@ public class Client {
 					}
 				}
 				else{
-					try{
-						String responseMessage = in.readUTF();
+					String responseMessage = null;
+					if((responseMessage = in.readUTF())!=null){
 						handleServerResponse(userInput, responseMessage, in);
-					}
-					catch(SocketTimeoutException e){
 					}
 				}
 			}
@@ -176,13 +172,11 @@ public class Client {
 						}
 					}
 					else{
-						try{
-							String responseMessage = in.readUTF();
+						String responseMessage = null;
+						if((responseMessage = in.readUTF())!=null){
 							handleServerResponse(userInput, responseMessage, in);
 							swatch.reset();
 							swatch.start();
-						}
-						catch(SocketTimeoutException e){
 						}
 					}
 					if(swatch.getTime()>1300){
