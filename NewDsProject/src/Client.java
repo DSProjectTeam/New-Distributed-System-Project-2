@@ -3,6 +3,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.net.Socket;
+import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.Random;
@@ -75,6 +76,7 @@ public class Client {
 				//Create SSL socket and connect it to the remote server 
 				SSLSocketFactory sslsocketfactory = (SSLSocketFactory) SSLSocketFactory.getDefault();
 				sslsocket = (SSLSocket) sslsocketfactory.createSocket(host, sport);
+				sslsocket.setSoTimeout(5);
 				out = new DataOutputStream(sslsocket.getOutputStream());
 				in = new DataInputStream(sslsocket.getInputStream());
 			}
@@ -121,10 +123,21 @@ public class Client {
 						while(true){
 							/*receive the last message of total resultSize and close. 
 							If not received in 1.3s, disconnect.*/
-							if(in.available()>0){
-								String responseMessage = in.readUTF();
-								handleServerResponse(userInput, responseMessage, in);
-								break;
+							if(!hasSecureOption){
+								if(in.available()>0){
+									String responseMessage = in.readUTF();
+									handleServerResponse(userInput, responseMessage, in);
+									break;
+								}
+							}
+							else{
+								try{
+									String responseMessage = in.readUTF();
+									handleServerResponse(userInput, responseMessage, in);
+									break;
+								}
+								catch(SocketTimeoutException e){
+								}
 							}
 							if(swatch.getTime()>1300){
 								break;
@@ -132,23 +145,45 @@ public class Client {
 						}
 						break;
 					}
-					//keep open to receive asynchronous responses from server
+				//keep open to receive asynchronous responses from server
+				if(!hasSecureOption){
 					if(in.available()>0){
 						String responseMessage = in.readUTF();
 						handleServerResponse(userInput, responseMessage, in);
 					}
 				}
+				else{
+					try{
+						String responseMessage = in.readUTF();
+						handleServerResponse(userInput, responseMessage, in);
+					}
+					catch(SocketTimeoutException e){
+					}
+				}
+			}
 				break;//???should here a break?
 			default:
 				//start timer, when over 1.3 second passed after the last JSON message was received, close socket.
 				swatch.start();
 				while(true){
 					//when a JSON messages returned, reset and restart timer.
-					if(in.available()>0){
-						String responseMessage = in.readUTF();
-						handleServerResponse(userInput, responseMessage, in);
-						swatch.reset();
-						swatch.start();
+					if(!hasSecureOption){
+						if(in.available()>0){
+							String responseMessage = in.readUTF();
+							handleServerResponse(userInput, responseMessage, in);
+							swatch.reset();
+							swatch.start();
+						}
+					}
+					else{
+						try{
+							String responseMessage = in.readUTF();
+							handleServerResponse(userInput, responseMessage, in);
+							swatch.reset();
+							swatch.start();
+						}
+						catch(SocketTimeoutException e){
+						}
 					}
 					if(swatch.getTime()>1300){
 						break;
