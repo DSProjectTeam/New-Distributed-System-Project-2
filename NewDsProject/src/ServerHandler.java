@@ -1009,7 +1009,7 @@ public class ServerHandler {
 								try {
 									//create SSL socket for connection
 									SSLSocket sslSocket = (SSLSocket)sslSocketFactory.createSocket(tempIp, tempPort);
-									sslSocket.setSoTimeout(5);
+//									sslSocket.setSoTimeout(5);
 									DataInputStream inputStream = new DataInputStream(sslSocket.getInputStream());
 									DataOutputStream outputStream = new DataOutputStream(sslSocket.getOutputStream());
 									outputStream.writeUTF(inputQuerry.toJSONString());
@@ -1019,11 +1019,10 @@ public class ServerHandler {
 									}
 									System.out.println("query sent to other server");
 									StopWatch s = new StopWatch();
-									s.start();									
+									s.start();		
+									String otherServerResponse = null;
 									while(true){
-										try{
-											inputStream.readUTF();
-											String otherServerResponse = inputStream.readUTF();
+										if((otherServerResponse = inputStream.readUTF())!=null){
 											JSONParser parser2 = new JSONParser();
 											
 											JSONObject otherResponse = new JSONObject();
@@ -1036,8 +1035,6 @@ public class ServerHandler {
 											if(otherResponse.containsKey("resultSize")||otherResponse.containsKey("errorMessage")){
 												break;
 											}
-										}catch(SocketTimeoutException e){
-											e.printStackTrace();
 										}
 										/*if(inputStream.available()>0){
 											String otherServerResponse = inputStream.readUTF();
@@ -1062,32 +1059,32 @@ public class ServerHandler {
 										}
 									}
 									
-										if (arrayList.get(0).get("response").equals("success")) {
-											hasMatchServer =true;
-											int size = arrayList.size();
-											totalOtehrResSize = totalOtehrResSize+size;
+									if (arrayList.get(0).get("response").equals("success")) {
+										hasMatchServer =true;
+										int size = arrayList.size();
+										totalOtehrResSize = totalOtehrResSize+size;
+										
+										for(int i =1; i<size-1;i++){
+											successOutcome.add(arrayList.get(i));
 											
-											for(int i =1; i<size-1;i++){
-												successOutcome.add(arrayList.get(i));
-												
-											}
-											otherReturn = new QueryData(true, successOutcome);
-											
-											
-										}else{
-											int size = arrayList.size();
-											for(int i = 0;i<size;i++){
-												errorOutcome.add(arrayList.get(i));
-											}
-											otherReturn = new QueryData(false, errorOutcome);
-											
-										}	
-															
-													
-										} catch (Exception e) {
-											
-											e.printStackTrace();
 										}
+										otherReturn = new QueryData(true, successOutcome);
+										
+										
+									}else{
+										int size = arrayList.size();
+										for(int i = 0;i<size;i++){
+											errorOutcome.add(arrayList.get(i));
+										}
+										otherReturn = new QueryData(false, errorOutcome);
+										
+									}	
+														
+												
+									} catch (Exception e) {
+										
+										e.printStackTrace();
+									}
 							}
 								
 							
