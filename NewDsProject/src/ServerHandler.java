@@ -3,6 +3,7 @@ import java.io.DataOutputStream;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketTimeoutException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.UnknownHostException;
@@ -335,7 +336,7 @@ public class ServerHandler {
 	public synchronized static QueryReturn handlingQuery(String name_query,String[] tags_query,
 			String description_query, String uri_query,String channel_query, 
 			String owner_query, boolean relay,HashMap<String, Resource> resources, ServerSocket serverSocket,String hostName){
-		/**用来存放满足template的resource*/
+		/**鐢ㄦ潵瀛樻斁婊¤冻template鐨剅esource*/
 		ArrayList<Resource> matchResourceSet = new ArrayList<Resource>();
 		String errorMessage;
 		String response;
@@ -574,7 +575,7 @@ public class ServerHandler {
 	public synchronized static QueryReturn handlingSubscribe(String id, String name_query,String[] tags_query,
 			String description_query, String uri_query,String channel_query, 
 			String owner_query, boolean relay,HashMap<String, Resource> resources, ServerSocket serverSocket,String hostName){
-		/**用来存放满足template的resource*/
+		/**鐢ㄦ潵瀛樻斁婊¤冻template鐨剅esource*/
 		ArrayList<Resource> matchResourceSet = new ArrayList<Resource>();
 		String errorMessage;
 		String response;
@@ -1008,6 +1009,7 @@ public class ServerHandler {
 								try {
 									//create SSL socket for connection
 									SSLSocket sslSocket = (SSLSocket)sslSocketFactory.createSocket(tempIp, tempPort);
+									sslSocket.setSoTimeout(5);
 									DataInputStream inputStream = new DataInputStream(sslSocket.getInputStream());
 									DataOutputStream outputStream = new DataOutputStream(sslSocket.getOutputStream());
 									outputStream.writeUTF(inputQuerry.toJSONString());
@@ -1017,15 +1019,33 @@ public class ServerHandler {
 									}
 									System.out.println("query sent to other server");
 									StopWatch s = new StopWatch();
-									s.start();
+									s.start();									
 									while(true){
-										if(inputStream.available()>0){
+										try{
+											inputStream.readUTF();
 											String otherServerResponse = inputStream.readUTF();
 											JSONParser parser2 = new JSONParser();
 											
 											JSONObject otherResponse = new JSONObject();
 											otherResponse = (JSONObject)parser2.parse(otherServerResponse);
-											/*System.out.println(otherResponse.toJSONString());*/
+											System.out.println(otherResponse.toJSONString());
+											JSONArray  jsonArray = new JSONArray();
+											
+											arrayList.add((JSONObject)parser2.parse(otherServerResponse));
+											
+											if(otherResponse.containsKey("resultSize")||otherResponse.containsKey("errorMessage")){
+												break;
+											}
+										}catch(SocketTimeoutException e){
+											e.printStackTrace();
+										}
+										/*if(inputStream.available()>0){
+											String otherServerResponse = inputStream.readUTF();
+											JSONParser parser2 = new JSONParser();
+											
+											JSONObject otherResponse = new JSONObject();
+											otherResponse = (JSONObject)parser2.parse(otherServerResponse);
+											System.out.println(otherResponse.toJSONString());
 											JSONArray  jsonArray = new JSONArray();
 											
 											arrayList.add((JSONObject)parser2.parse(otherServerResponse));
@@ -1034,7 +1054,7 @@ public class ServerHandler {
 												break;
 											}
 											
-										}
+										}*/
 										/**other server connected but no response*/
 										if(s.getTime()>500){
 											s.stop();
