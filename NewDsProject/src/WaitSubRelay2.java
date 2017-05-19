@@ -1,6 +1,7 @@
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.net.Socket;
+import java.net.SocketTimeoutException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -54,6 +55,10 @@ public class WaitSubRelay2 implements Runnable{
 					System.setProperty("java.net.ssl.trustStore", "clientKeystore/aGreatName");
 					SSLSocketFactory sslSocketFactory = (SSLSocketFactory)SSLSocketFactory.getDefault();
 					SSLSocket sslSocket = (SSLSocket) sslSocketFactory.createSocket(host, port);
+					
+					//set socket time out to implement in.avaliable()
+					sslSocket.setSoTimeout(5);
+					
 					out = new DataOutputStream(sslSocket.getOutputStream());
 					in = new DataInputStream(sslSocket.getInputStream());
 					
@@ -87,7 +92,7 @@ public class WaitSubRelay2 implements Runnable{
 					}
 					
 					//input > 0
-					if (in.available()>0) {
+					/*if (in.available()>0) {
 						JSONParser parser = new JSONParser();
 						JSONObject message = (JSONObject) parser.parse(in.readUTF());
 						
@@ -101,6 +106,38 @@ public class WaitSubRelay2 implements Runnable{
 						}
 						
 						
+					}*/
+					JSONParser parser = new JSONParser();
+					//if secure connection,  in.avaliable is not working, try to catch socketTimeout exception to 
+					//replace it with the similar function.
+					if(isSecurePort){
+						try{
+							JSONObject message = (JSONObject) parser.parse(in.readUTF());
+							if(!message.containsKey("resultSize")){
+								clientOutput.writeUTF(message.toJSONString());
+								clientOutput.flush();
+							}else{
+								hitCount = Integer.parseInt(message.get("resultSize").toString());
+								relayHitCounter = relayHitCounter+hitCount;
+								break;
+							}
+						}catch(SocketTimeoutException e){
+							e.printStackTrace();
+						}
+					}else{
+						if (in.available()>0) {
+							
+							JSONObject message = (JSONObject) parser.parse(in.readUTF());
+							
+							if(!message.containsKey("resultSize")){
+								clientOutput.writeUTF(message.toJSONString());
+								clientOutput.flush();
+							}else{
+								hitCount = Integer.parseInt(message.get("resultSize").toString());
+								relayHitCounter = relayHitCounter+hitCount;
+								break;
+							}
+						}
 					}
 					
 					//input = 0 go back to the while(ture) loop
