@@ -1009,7 +1009,7 @@ public class ServerHandler {
 								try {
 									//create SSL socket for connection
 									SSLSocket sslSocket = (SSLSocket)sslSocketFactory.createSocket(tempIp, tempPort);
-//									sslSocket.setSoTimeout(5);
+									sslSocket.setSoTimeout(1300);
 									DataInputStream inputStream = new DataInputStream(sslSocket.getInputStream());
 									DataOutputStream outputStream = new DataOutputStream(sslSocket.getOutputStream());
 									outputStream.writeUTF(inputQuerry.toJSONString());
@@ -1018,11 +1018,12 @@ public class ServerHandler {
 										System.out.println("SENT: "+inputQuerry.toJSONString());
 									}
 									System.out.println("query sent to other server");
-									StopWatch s = new StopWatch();
-									s.start();		
-									String otherServerResponse = null;
+//									StopWatch s = new StopWatch();
+//									s.start();		
 									while(true){
-										if((otherServerResponse = inputStream.readUTF())!=null){
+										try{
+											inputStream.readUTF();
+											String otherServerResponse = inputStream.readUTF();
 											JSONParser parser2 = new JSONParser();
 											
 											JSONObject otherResponse = new JSONObject();
@@ -1035,6 +1036,8 @@ public class ServerHandler {
 											if(otherResponse.containsKey("resultSize")||otherResponse.containsKey("errorMessage")){
 												break;
 											}
+										}catch(SocketTimeoutException e){
+											break;
 										}
 										/*if(inputStream.available()>0){
 											String otherServerResponse = inputStream.readUTF();
@@ -1053,10 +1056,10 @@ public class ServerHandler {
 											
 										}*/
 										/**other server connected but no response*/
-										if(s.getTime()>500){
-											s.stop();
-											return otherReturn;
-										}
+//										if(s.getTime()>500){
+//											s.stop();
+//											return otherReturn;
+//										}
 									}
 									
 									if (arrayList.get(0).get("response").equals("success")) {

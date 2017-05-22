@@ -57,7 +57,7 @@ public class WaitSubRelay2 implements Runnable{
 					SSLSocket sslSocket = (SSLSocket) sslSocketFactory.createSocket(host, port);
 					
 					//set socket time out to implement in.avaliable()
-//					sslSocket.setSoTimeout(5);
+					sslSocket.setSoTimeout(1300);
 					
 					out = new DataOutputStream(sslSocket.getOutputStream());
 					in = new DataInputStream(sslSocket.getInputStream());
@@ -111,8 +111,7 @@ public class WaitSubRelay2 implements Runnable{
 					//if secure connection,  in.avaliable is not working, try to catch socketTimeout exception to 
 					//replace it with the similar function.
 					if(isSecurePort){
-						String data = null;
-						if((data = in.readUTF())!=null){
+						try{
 							JSONObject message = (JSONObject) parser.parse(in.readUTF());
 							if(!message.containsKey("resultSize")){
 								clientOutput.writeUTF(message.toJSONString());
@@ -122,6 +121,8 @@ public class WaitSubRelay2 implements Runnable{
 								relayHitCounter = relayHitCounter+hitCount;
 								break;
 							}
+						}catch(SocketTimeoutException e){
+							//should NOT be any "break" here!, the while(true) loop will continue.
 						}
 
 					}else{
