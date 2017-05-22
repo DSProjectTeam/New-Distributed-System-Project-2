@@ -197,13 +197,13 @@ public class EZshareServer {
 				//Secure port initiated, only received secure connection
 				
 				//keystore contains our own certificate and private key
-				System.setProperty("javax.net.ssl.keyStore","serverKeystore/aGreatName");
+				System.setProperty("javax.net.ssl.keyStore","sslResource/keystore.jks");
 				
 				//password to access the private key from the keystore file
 				System.setProperty("javax.net.ssl.keyStorePassword", "12345678");
 				
 				// Enable debugging to view the handshake and communication which happens between the SSLClient and the SSLServer
-				System.setProperty("javax.net.debug","all");
+				//System.setProperty("javax.net.debug","all");
 				
 				EZshareServer eZshareServer = new EZshareServer(isSecurePort);
 				

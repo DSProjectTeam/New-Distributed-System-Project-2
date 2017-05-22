@@ -72,11 +72,11 @@ public class Client {
 			if(hasSecureOption){
 				//Location of the Java keystore file containing the collection of 
 				//certificates trusted by this application (trust store).
-				System.setProperty("javax.net.ssl.trustStore", "clientKeystore/myGreatName");
+				System.setProperty("javax.net.ssl.trustStore", "sslResource/keystore.jks");
 				//Create SSL socket and connect it to the remote server 
 				SSLSocketFactory sslsocketfactory = (SSLSocketFactory) SSLSocketFactory.getDefault();
 				sslsocket = (SSLSocket) sslsocketfactory.createSocket(host, sport);
-				sslsocket.setSoTimeout(5);
+				//sslsocket.setSoTimeout(5);
 				out = new DataOutputStream(sslsocket.getOutputStream());
 				in = new DataInputStream(sslsocket.getInputStream());
 			}
