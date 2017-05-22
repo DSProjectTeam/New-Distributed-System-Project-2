@@ -1,5 +1,6 @@
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.net.Socket;
@@ -76,7 +77,7 @@ public class Client {
 				//Create SSL socket and connect it to the remote server 
 				SSLSocketFactory sslsocketfactory = (SSLSocketFactory) SSLSocketFactory.getDefault();
 				sslsocket = (SSLSocket) sslsocketfactory.createSocket(host, sport);
-				//sslsocket.setSoTimeout(5);
+				sslsocket.setSoTimeout(1300);
 				out = new DataOutputStream(sslsocket.getOutputStream());
 				in = new DataInputStream(sslsocket.getInputStream());
 			}
@@ -131,9 +132,11 @@ public class Client {
 								}
 							}
 							else{
-								String responseMessage = null;
-								if((responseMessage = in.readUTF())!=null){
+								try{
+									String responseMessage = in.readUTF();
 									handleServerResponse(userInput, responseMessage, in);
+								}
+								catch(SocketTimeoutException e){
 									break;
 								}
 							}
@@ -172,11 +175,12 @@ public class Client {
 						}
 					}
 					else{
-						String responseMessage = null;
-						if((responseMessage = in.readUTF())!=null){
+						try{
+							String responseMessage = in.readUTF();
 							handleServerResponse(userInput, responseMessage, in);
-							swatch.reset();
-							swatch.start();
+						}
+						catch(SocketTimeoutException e){
+							break;
 						}
 					}
 					if(swatch.getTime()>1300){
