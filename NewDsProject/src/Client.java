@@ -154,9 +154,12 @@ public class Client {
 					}
 				}
 				else{
-					String responseMessage = null;
-					if((responseMessage = in.readUTF())!=null){
+					try{
+						String responseMessage = in.readUTF();
 						handleServerResponse(userInput, responseMessage, in);
+					}
+					catch(SocketTimeoutException e){
+						//should NOT be any break here.
 					}
 				}
 			}
