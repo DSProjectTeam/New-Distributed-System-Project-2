@@ -92,7 +92,7 @@ public class Client {
 			out.flush();
 			
 			//print part of debug information.
-			System.out.println("command sent to server: "+userInput.toJSONString());
+//			System.out.println("command sent to server: "+userInput.toJSONString());
 			if(hasDebugOption){
 			    System.out.println("-setting debug on");
 			    System.out.println(commandType+" to "+host+":"+port);
@@ -114,7 +114,7 @@ public class Client {
 						out.writeUTF(unsubscribeMessage.toJSONString());
 						out.flush();
 						System.out.println("Unsubscribe message sent. ID: "+id+" have successfully unsubscribed.");
-						System.out.println("command sent to server: "+unsubscribeMessage.toJSONString());
+//						System.out.println("command sent to server: "+unsubscribeMessage.toJSONString());
 						if(hasDebugOption){
 						    System.out.println("-setting debug on");
 						    System.out.println(commandType+" to "+host+":"+port);
@@ -457,18 +457,19 @@ public class Client {
 			case "-share":
 			case "-exchange":
 			case "-query":
-				System.out.println("response received from server:\n"+show);
+//				System.out.println("response received from server:\n"+show);
 				break;
 			case "-fetch":
-				System.out.println("response received from server:\n"+show);
+//				System.out.println("response received from server:\n"+show);
 				handleDownload(serverResponse,in);
 				break;
 			case "-subscribe":
-				System.out.println("response received from server:\n"+show);
+//				System.out.println("response received from server:\n"+show);
 				break;
 			/*commandType remains "", and the pair {"command",""} was put into a JSONObject and sent to server.
 				So here we just print out the error message returned from server. no need to handle empty command case*/
-			default: System.out.println("response received from server:\n"+serverResponse.toJSONString());
+			default: 
+//				System.out.println("response received from server:\n"+serverResponse.toJSONString());
 				break;
 			}
 
