@@ -168,9 +168,9 @@ public class Subscrible {
 		}else{
 			//relay is true
 			
-			while(isUnsubscribe==false){System.out.print("1");
+			while(isUnsubscribe==false){System.out.println("1");
 				QueryReturn queryReturn= ServerHandler.handlingSubscribe(id, name, tags, description, uri, channel, owner, relay, resources, socket, hostName);System.out.println("1.1");System.out.println(serverList.size());
-				Subscrible Subscrible = new Subscrible(resources,serverList,in,out,hasDebugOption);System.out.print("1.2");
+				Subscrible Subscrible = new Subscrible(resources,serverList,in,out,hasDebugOption);System.out.println("1.2");
 				
 				//invalid template or valid template but no current match, pending.
 				if (queryReturn.hasMatch==false) {System.out.println("2");
@@ -186,7 +186,7 @@ public class Subscrible {
 							System.out.println("pending!!");
 						}
 					}
-				}else{System.out.print("3");
+				}else{System.out.println("3");
 					//valid template, has match, monitor resources update.
 
 						for(JSONObject jsonObject: queryReturn.returnList){
@@ -214,7 +214,7 @@ public class Subscrible {
 						Integer tempPort = Integer.parseInt(hostAndPortTemp[1]);
 
 						try {
-							if(!InetAddress.getLocalHost().getHostAddress().equals(tempIP)){
+							if(!InetAddress.getLocalHost().getHostAddress().equals(tempIP)){System.out.println("去监听了");
 								
 								//WaitSubRelay2 现在自己可以监听client端的unsubscribe命令。
 								WaitSubRelay2 relay2 = new WaitSubRelay2(input, tempIP, tempPort, out, id, relayHitCounter,in,isSecurePort,hasDebugOption);
@@ -224,7 +224,7 @@ public class Subscrible {
 							e.printStackTrace();
 						}		
 					}
-				} else{System.out.print("5");//forwarded==true, forwarded already
+				} else{System.out.print("5");
 					if (!newServers.isEmpty()){	
 						input.put("relay", "false");						
 						ExecutorService executorServiceForward = Executors.newFixedThreadPool(newServers.size());
@@ -249,7 +249,7 @@ public class Subscrible {
 				
 				try {System.out.println("6");
 					isUnsubscribe = unsubscribe.get();System.out.println("7");
-					if (isUnsubscribe) {
+					if (isUnsubscribe) {System.out.println("8");
 						
 						StopWatch watch = new StopWatch();
 						watch.start();
@@ -257,7 +257,7 @@ public class Subscrible {
 						/*这里让下面的代码暂停0.5秒再执行，以免WaitRelay2中对relayHitCounter的操作还没更新
 						 * 而下面代码已经将relayHitCounter发送走了。
 						 * */
-						if (watch.getTime()>500) {System.out.println("8");
+						if (watch.getTime()>500) {
 							watch.stop();
 							//remove the {"id":xxx} or {"resposne":"success"}
 							Subscrible.matchList.remove(0);
@@ -278,7 +278,7 @@ public class Subscrible {
 				} catch (Exception e) {
 					
 				}
-				
+				System.out.println("10");
 				//below begin to forward the subscription to other servers.
 				/*if(forwarded==false){
 					if(!serverList.isEmpty()){
