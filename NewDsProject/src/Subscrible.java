@@ -139,12 +139,17 @@ public class Subscrible {
 				try {
 					isUnsubscribe = unsubscribe.get();
 					if (isUnsubscribe) {
-						//remove the {"id":xxx} or {"resposne":"success"}
-						subscrible.matchList.remove(0);
-						
 						JSONObject jsonObject = new JSONObject();
-//						System.out.println(subscrible.matchList.size());
-						jsonObject.put("resultSize", subscrible.matchList.size());
+						if(subscrible.matchList.size()>1){
+							
+							//remove the {"id":xxx} or {"resposne":"success"}
+							subscrible.matchList.remove(0);
+	//						System.out.println(subscrible.matchList.size());
+							jsonObject.put("resultSize", subscrible.matchList.size());
+						}
+						else{
+							jsonObject.put("resultSize", subscrible.matchList.size());
+						}
 						subscrible.sendMessage(jsonObject);
 
 //						out.writeUTF(jsonObject.toJSONString());		
