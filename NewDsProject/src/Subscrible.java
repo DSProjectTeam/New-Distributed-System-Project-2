@@ -93,7 +93,7 @@ public class Subscrible {
 		
 		//loop until receive unsubscribe message
 		if (relay == false) {
-			System.out.println("1");
+//			System.out.println("1");
 			while(isUnsubscribe == false){
 				
 				QueryReturn queryReturn= ServerHandler.handlingSubscribe(id, name, tags, description, uri, channel, owner, relay, resources, socket, hostName);
@@ -101,7 +101,7 @@ public class Subscrible {
 				//invalid template or valid template but no current match, pending.
 				Subscrible subscrible = new Subscrible(resources, in, out, hasDebugOption);
 				if (queryReturn.hasMatch==false) {
-					System.out.println("2");
+//					System.out.println("2");
 					//invalid template
 					if (queryReturn.reponseMessage.get("response").toString().equals("error")) {
 						subscrible.sendMessage(queryReturn.reponseMessage);
@@ -118,7 +118,7 @@ public class Subscrible {
 					}
 				}else{
 					//valid template, has match, monitor resources update.
-					System.out.println("3");
+//					System.out.println("3");
 						for(JSONObject jsonObject: queryReturn.returnList){
 							try {
 								out.writeUTF(jsonObject.toJSONString());
@@ -143,7 +143,7 @@ public class Subscrible {
 						subscrible.matchList.remove(0);
 						
 						JSONObject jsonObject = new JSONObject();
-						System.out.println(subscrible.matchList.size());
+//						System.out.println(subscrible.matchList.size());
 						jsonObject.put("resultSize", subscrible.matchList.size());
 						subscrible.sendMessage(jsonObject);
 
@@ -411,8 +411,11 @@ public class Subscrible {
 					
 					if (matchList.isEmpty()) {
 						try {
-							this.out.writeUTF(jsonObject.toJSONString());
+							this.out.writeUTF(jsonObject.toJSONString());//delete this line to avoid duplicate?
 							this.hitCounter++;
+							if(hasDebugOption){
+							       System.out.println("SENT: "+jsonObject.toJSONString());
+								}
 						} catch (IOException e) {
 							e.printStackTrace();
 						}
@@ -422,6 +425,9 @@ public class Subscrible {
 							try {
 								this.out.writeUTF(jsonObject.toJSONString());
 								this.hitCounter++;
+								if(hasDebugOption){
+								       System.out.println("SENT: "+jsonObject.toJSONString());
+									}
 							} catch (IOException e) {
 								e.printStackTrace();
 							}
