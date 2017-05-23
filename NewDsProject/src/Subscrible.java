@@ -89,7 +89,7 @@ public class Subscrible {
 		
 		//create new callabe thread to monitor unsubscribe status
 		ExecutorService executorService = Executors.newFixedThreadPool(1);
-		Future<Boolean> unsubscribe = executorService.submit(new IsSubscribe(in, id));
+		Future<Boolean> unsubscribe = executorService.submit(new IsSubscribe(in, id,hasDebugOption));
 		
 		//loop until receive unsubscribe message
 		if (relay == false) {
@@ -109,8 +109,11 @@ public class Subscrible {
 					}else{
 						//valid template, but no match currently, pending
 						if (queryReturn.reponseMessage.get("response").toString().equals("pending")) {
+							JSONObject jsonObject = new JSONObject();
+							jsonObject.put("response", "success");
+							jsonObject.put("id", id);
+							subscrible.sendMessage(jsonObject);
 							subscrible.checkUpdates(id, name, tags, description, uri, channel, owner, relay,socket, hostName);
-							System.out.println("pending!!");
 						}
 					}
 				}else{
@@ -142,8 +145,11 @@ public class Subscrible {
 						JSONObject jsonObject = new JSONObject();
 						System.out.println(subscrible.matchList.size());
 						jsonObject.put("resultSize", subscrible.matchList.size());
-						out.writeUTF(jsonObject.toJSONString());		
-						out.flush();
+						subscrible.sendMessage(jsonObject);
+
+//						out.writeUTF(jsonObject.toJSONString());		
+//						out.flush();
+						
 						//Thread.yield();
 						break;
 					}
@@ -204,7 +210,7 @@ public class Subscrible {
 							if(!InetAddress.getLocalHost().getHostAddress().equals(tempIP)){
 								
 								//WaitSubRelay2 现在自己可以监听client端的unsubscribe命令。
-								WaitSubRelay2 relay2 = new WaitSubRelay2(input, tempIP, tempPort, out, id, relayHitCounter,in,isSecurePort);
+								WaitSubRelay2 relay2 = new WaitSubRelay2(input, tempIP, tempPort, out, id, relayHitCounter,in,isSecurePort,hasDebugOption);
 								relay2.run();
 							}
 						} catch (Exception e) {
@@ -223,7 +229,7 @@ public class Subscrible {
 								try {
 									if(!InetAddress.getLocalHost().getHostAddress().equals(tempIP)){
 											
-										WaitSubRelay2 relay2 = new WaitSubRelay2(input, tempIP, tempPort, out, id, relayHitCounter,in,isSecurePort);
+										WaitSubRelay2 relay2 = new WaitSubRelay2(input, tempIP, tempPort, out, id, relayHitCounter,in,isSecurePort,hasDebugOption);
 										relay2.run();
 									}
 								} catch (Exception e) {
