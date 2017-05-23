@@ -26,9 +26,10 @@ public class WaitSubRelay2 implements Runnable{
 	int relayHitCounter;
 	boolean isUnsubscribe = false;
 	boolean isSecurePort;
+	boolean hasDebugOption;
 	
 	public WaitSubRelay2(JSONObject subscribeRequest, String host, int port, 
-			DataOutputStream clientOut,String id, int relayHitCounter, DataInputStream clientInput, boolean isSecurePort) {
+			DataOutputStream clientOut,String id, int relayHitCounter, DataInputStream clientInput, boolean isSecurePort,boolean hasDebugOption) {
 		this.subscribeRequest = subscribeRequest;
 		this.host = host;
 		this.id = id;
@@ -36,6 +37,7 @@ public class WaitSubRelay2 implements Runnable{
 		this.clientInput = clientInput;
 		this.relayHitCounter = relayHitCounter;
 		this.isSecurePort = isSecurePort;
+		this.hasDebugOption = hasDebugOption;
 	}
 	
 	@Override
@@ -44,7 +46,7 @@ public class WaitSubRelay2 implements Runnable{
 		
 		//这里也使用IsSubscribe来监听unsubscribe
 		ExecutorService executorService = Executors.newFixedThreadPool(1);
-		Future<Boolean> unsubscribe = executorService.submit(new IsSubscribe(clientInput, id));
+		Future<Boolean> unsubscribe = executorService.submit(new IsSubscribe(clientInput, id,hasDebugOption));
 		
 		int hitCount = 0;
 		
