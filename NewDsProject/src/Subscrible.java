@@ -41,7 +41,8 @@ public class Subscrible {
 		this.lastState = new HashMap<>(resources);
 		this.serverList = serverList;
 		this.lastStateServerList = new ArrayList<String>(serverList);
-		this.newServers.clear();
+//		this.newServers.clear();
+		this.newServers =new ArrayList<String>();
 		this.in = in;
 		this.out = out;
 		this.hasDebugOption = hasDebugOption;
@@ -172,7 +173,7 @@ public class Subscrible {
 				Subscrible Subscrible = new Subscrible(resources,serverList,in,out,hasDebugOption);System.out.print("1.2");
 				
 				//invalid template or valid template but no current match, pending.
-				if (queryReturn.hasMatch==false) {System.out.print("2");
+				if (queryReturn.hasMatch==false) {System.out.println("2");
 					
 					//invalid template
 					if (queryReturn.reponseMessage.get("response").toString().equals("error")) {
@@ -203,7 +204,7 @@ public class Subscrible {
 					
 				}
 				
-				if(!serverList.isEmpty()){System.out.print("4");
+				if(!serverList.isEmpty()){System.out.println("4");
 					//change relay field to false.
 					input.put("relay", "false");						
 					ExecutorService executorServiceForward = Executors.newFixedThreadPool(serverList.size());
@@ -246,8 +247,8 @@ public class Subscrible {
 					}
 				}
 				
-				try {
-					isUnsubscribe = unsubscribe.get();
+				try {System.out.println("6");
+					isUnsubscribe = unsubscribe.get();System.out.println("7");
 					if (isUnsubscribe) {
 						
 						StopWatch watch = new StopWatch();
@@ -256,7 +257,7 @@ public class Subscrible {
 						/*这里让下面的代码暂停0.5秒再执行，以免WaitRelay2中对relayHitCounter的操作还没更新
 						 * 而下面代码已经将relayHitCounter发送走了。
 						 * */
-						if (watch.getTime()>500) {
+						if (watch.getTime()>500) {System.out.println("8");
 							watch.stop();
 							//remove the {"id":xxx} or {"resposne":"success"}
 							Subscrible.matchList.remove(0);
@@ -270,7 +271,7 @@ public class Subscrible {
 							Thread.yield();
 							break;
 						}
-						
+						System.out.println("9");
 						
 						
 					}
@@ -455,7 +456,7 @@ public class Subscrible {
 	 * @return if serverList has updated.
 	 */
 	private boolean checkUpdatedServer() {
-		this.newServers.clear();
+		newServers.clear();
         if(this.serverList.size()!=this.lastStateServerList.size()){
         	System.out.println("serverList updated");
         	this.serverListUpdated = false;
