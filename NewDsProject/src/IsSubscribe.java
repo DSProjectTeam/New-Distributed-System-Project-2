@@ -1,4 +1,5 @@
 import java.io.DataInputStream;
+import java.net.SocketTimeoutException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -37,6 +38,21 @@ public class IsSubscribe implements Callable<Boolean>{
 						isUnsubscribe = true;
 						break;
 					}
+				}
+				try{
+					JSONParser parser = new JSONParser();
+					JSONObject message = (JSONObject) parser.parse(in.readUTF());
+					if (message.get("command").toString().equals("UNSUBSCRIBE")&&
+							message.get("id").toString().equals(id)) {
+						if(hasDebugOption){
+						       System.out.println("RECEIVED: "+message.toJSONString());
+							}
+						isUnsubscribe = true;
+						break;
+					}
+				}
+				catch(SocketTimeoutException e){
+					//should NOT be any break here.
 				}
 			}
 		} catch (Exception e) {

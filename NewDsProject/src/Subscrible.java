@@ -118,18 +118,19 @@ public class Subscrible {
 					}
 				}else{
 					//valid template, has match, monitor resources update.
+					
 //					System.out.println("3");
-						for(JSONObject jsonObject: queryReturn.returnList){
-							try {
-								out.writeUTF(jsonObject.toJSONString());
-								
-								//put it in the match list to avoid duplicate resource has been sent
-								subscrible.matchList.add(jsonObject);
-							} catch (IOException e) {
-								e.printStackTrace();
-							}
-							
-						}
+//						for(JSONObject jsonObject: queryReturn.returnList){
+//							try {
+//								out.writeUTF(jsonObject.toJSONString());
+//								
+//								//put it in the match list to avoid duplicate resource has been sent
+//								subscrible.matchList.add(jsonObject);
+//							} catch (IOException e) {
+//								e.printStackTrace();
+//							}
+//							
+//						}
 						subscrible.checkUpdates(id, name, tags, description, uri, channel, owner, relay,socket, hostName);
 					
 				}
@@ -139,12 +140,17 @@ public class Subscrible {
 				try {
 					isUnsubscribe = unsubscribe.get();
 					if (isUnsubscribe) {
-						//remove the {"id":xxx} or {"resposne":"success"}
-						subscrible.matchList.remove(0);
-						
 						JSONObject jsonObject = new JSONObject();
-//						System.out.println(subscrible.matchList.size());
-						jsonObject.put("resultSize", subscrible.matchList.size());
+						if(subscrible.matchList.size()>1){
+							
+							//remove the {"id":xxx} or {"resposne":"success"}
+							subscrible.matchList.remove(0);
+	//						System.out.println(subscrible.matchList.size());
+							jsonObject.put("resultSize", subscrible.matchList.size());
+						}
+						else{
+							jsonObject.put("resultSize", subscrible.matchList.size());
+						}
 						subscrible.sendMessage(jsonObject);
 
 //						out.writeUTF(jsonObject.toJSONString());		
@@ -161,12 +167,12 @@ public class Subscrible {
 		}else{
 			//relay is true
 			
-			while(isUnsubscribe==false){
-				QueryReturn queryReturn= ServerHandler.handlingSubscribe(id, name, tags, description, uri, channel, owner, relay, resources, socket, hostName);
-				Subscrible Subscrible = new Subscrible(resources,serverList,in,out,hasDebugOption);
+			while(isUnsubscribe==false){System.out.print("1");
+				QueryReturn queryReturn= ServerHandler.handlingSubscribe(id, name, tags, description, uri, channel, owner, relay, resources, socket, hostName);System.out.println("1.1");System.out.println(serverList.size());
+				Subscrible Subscrible = new Subscrible(resources,serverList,in,out,hasDebugOption);System.out.print("1.2");
 				
 				//invalid template or valid template but no current match, pending.
-				if (queryReturn.hasMatch==false) {
+				if (queryReturn.hasMatch==false) {System.out.print("2");
 					
 					//invalid template
 					if (queryReturn.reponseMessage.get("response").toString().equals("error")) {
@@ -179,7 +185,7 @@ public class Subscrible {
 							System.out.println("pending!!");
 						}
 					}
-				}else{
+				}else{System.out.print("3");
 					//valid template, has match, monitor resources update.
 
 						for(JSONObject jsonObject: queryReturn.returnList){
@@ -197,7 +203,7 @@ public class Subscrible {
 					
 				}
 				
-				if(!serverList.isEmpty()){
+				if(!serverList.isEmpty()){System.out.print("4");
 					//change relay field to false.
 					input.put("relay", "false");						
 					ExecutorService executorServiceForward = Executors.newFixedThreadPool(serverList.size());
@@ -217,7 +223,7 @@ public class Subscrible {
 							e.printStackTrace();
 						}		
 					}
-				} else{//forwarded==true, forwarded already
+				} else{System.out.print("5");//forwarded==true, forwarded already
 					if (!newServers.isEmpty()){	
 						input.put("relay", "false");						
 						ExecutorService executorServiceForward = Executors.newFixedThreadPool(newServers.size());
