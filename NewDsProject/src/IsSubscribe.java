@@ -30,7 +30,7 @@ public class IsSubscribe implements Callable<Boolean>{
 					JSONParser parser = new JSONParser();
 					JSONObject message = (JSONObject) parser.parse(in.readUTF());
 					if (message.get("command").toString().equals("UNSUBSCRIBE")&&
-							message.get("id").toString().equals(id)) {System.out.println(hasDebugOption);
+							message.get("id").toString().equals(id)) {
 						if(hasDebugOption){
 						       System.out.println("RECEIVED: "+message.toJSONString());
 							}
