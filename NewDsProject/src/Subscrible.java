@@ -33,6 +33,7 @@ public class Subscrible {
 	boolean hasDebugOption;
 	boolean isSecurePort;
 	ArrayList<JSONObject> matchList;
+	ArrayList<JSONObject> matchBeforeChangeList;
 	int hitCounter;
 	volatile static int  relayHitCounter;
 	
@@ -49,6 +50,7 @@ public class Subscrible {
 		int hitCounter = 0;
 		this.relayHitCounter = 0;
 		this.isSecurePort = isSecurePort;
+		this.matchBeforeChangeList = new ArrayList<>();
 	}
 	
 	
@@ -60,6 +62,7 @@ public class Subscrible {
 		this.hasDebugOption = hasDebugOption;
 		this.matchList = new ArrayList<>();
 		int hitCounter = 0;
+		this.matchBeforeChangeList = new ArrayList<>();
 	}
 	
 	
@@ -118,19 +121,27 @@ public class Subscrible {
 					}
 				}else{
 					//valid template, has match, monitor resources update.
+					for(JSONObject jsonObject: queryReturn.returnList){
+						
+						//local has match when subscribe come in, these matches will not be sent.
+						subscrible.matchBeforeChangeList.add(jsonObject);
+						
+						
+					}
 					
-//					System.out.println("3");
-//						for(JSONObject jsonObject: queryReturn.returnList){
-//							try {
-//								out.writeUTF(jsonObject.toJSONString());
-//								
-//								//put it in the match list to avoid duplicate resource has been sent
-//								subscrible.matchList.add(jsonObject);
-//							} catch (IOException e) {
-//								e.printStackTrace();
-//							}
-//							
-//						}
+					
+					/*System.out.println("3");
+						for(JSONObject jsonObject: queryReturn.returnList){
+							try {
+								out.writeUTF(jsonObject.toJSONString());
+								
+								//put it in the match list to avoid duplicate resource has been sent
+								subscrible.matchList.add(jsonObject);
+							} catch (IOException e) {
+								e.printStackTrace();
+							}
+							
+						}*/
 						subscrible.checkUpdates(id, name, tags, description, uri, channel, owner, relay,socket, hostName);
 					
 				}
@@ -141,16 +152,17 @@ public class Subscrible {
 					isUnsubscribe = unsubscribe.get();
 					if (isUnsubscribe) {
 						JSONObject jsonObject = new JSONObject();
-						if(subscrible.matchList.size()>1){
+						/*if(subscrible.matchList.size()>1){
 							
 							//remove the {"id":xxx} or {"resposne":"success"}
 							subscrible.matchList.remove(0);
-	//						System.out.println(subscrible.matchList.size());
+							System.out.println(subscrible.matchList.toString());
 							jsonObject.put("resultSize", subscrible.matchList.size());
 						}
 						else{
 							jsonObject.put("resultSize", subscrible.matchList.size());
-						}
+						}*/
+						jsonObject.put("resultSize", subscrible.hitCounter);
 						subscrible.sendMessage(jsonObject);
 
 //						out.writeUTF(jsonObject.toJSONString());		
@@ -189,14 +201,15 @@ public class Subscrible {
 					//valid template, has match, monitor resources update.
 
 						for(JSONObject jsonObject: queryReturn.returnList){
-							try {
+							/*try {
 								out.writeUTF(jsonObject.toJSONString());
 								
 								//put it in the match list to avoid duplicate resource has been sent
 								Subscrible.matchList.add(jsonObject);
 							} catch (IOException e) {
 								e.printStackTrace();
-							}
+							}*/
+							Subscrible.matchBeforeChangeList.add(jsonObject);
 							
 						}
 						Subscrible.checkUpdates(id, name, tags, description, uri, channel, owner, relay,socket, hostName);
@@ -415,7 +428,7 @@ public class Subscrible {
 			if (temp.hasMatch==true) {
 				for(JSONObject jsonObject : temp.returnList){
 					
-					if (matchList.isEmpty()) {
+					if (matchList.isEmpty()&&!this.matchBeforeChangeList.contains(jsonObject)) {
 						try {
 							this.out.writeUTF(jsonObject.toJSONString());//delete this line to avoid duplicate?
 							this.hitCounter++;
@@ -427,17 +440,18 @@ public class Subscrible {
 						}
 						matchList.add(jsonObject);
 					}else{
-						if(!matchList.contains(jsonObject)){
+						if(!matchList.contains(jsonObject)&&!this.matchBeforeChangeList.contains(jsonObject)){
 							try {
 								this.out.writeUTF(jsonObject.toJSONString());
 								this.hitCounter++;
 								if(hasDebugOption){
 								       System.out.println("SENT: "+jsonObject.toJSONString());
 									}
+								matchList.add(jsonObject);
 							} catch (IOException e) {
 								e.printStackTrace();
 							}
-							matchList.add(jsonObject);
+							
 						}
 					}					
 				}
