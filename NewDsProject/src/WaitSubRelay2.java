@@ -32,6 +32,7 @@ public class WaitSubRelay2 implements Runnable{
 			DataOutputStream clientOut,String id, int relayHitCounter, DataInputStream clientInput, boolean isSecurePort,boolean hasDebugOption) {
 		this.subscribeRequest = subscribeRequest;
 		this.host = host;
+		this.port = port;
 		this.id = id;
 		this.clientOutput = clientOut;
 		this.clientInput = clientInput;
