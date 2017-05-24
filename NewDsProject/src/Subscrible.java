@@ -228,7 +228,7 @@ public class Subscrible {
 						String[] hostAndPortTemp = server.split(":");
 						String tempIP = hostAndPortTemp[0];
 						Integer tempPort = Integer.parseInt(hostAndPortTemp[1]);
-
+						
 						try {
 							if(!InetAddress.getLocalHost().getHostAddress().equals(tempIP)){System.out.println("去监听了");
 								

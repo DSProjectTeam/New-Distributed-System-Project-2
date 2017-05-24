@@ -237,13 +237,13 @@ public class EZshareServer {
 								temp = threadTime;
 							}else {
 								ServerThread thread = new ServerThread(sslClientSocket, eZshareServer.resources, eZshareServer.secret, sslServerSocket,
-										eZshareServer.serverList, eZshareServer.hasDebugOption, connectionintervallimit,hostName,eZshareServer.isSecure);
+										eZshareServer.serverList,eZshareServer.secureServerList, eZshareServer.hasDebugOption, connectionintervallimit,hostName,eZshareServer.isSecure);
 								thread.start();
 								temp = threadTime;
 							}
 						}else{
 							ServerThread thread = new ServerThread(sslClientSocket, eZshareServer.resources, eZshareServer.secret, sslServerSocket,
-									eZshareServer.serverList, eZshareServer.hasDebugOption, connectionintervallimit,hostName,eZshareServer.isSecure);
+									eZshareServer.serverList, eZshareServer.secureServerList,eZshareServer.hasDebugOption, connectionintervallimit,hostName,eZshareServer.isSecure);
 							thread.start();
 							temp = threadTime;
 						}
