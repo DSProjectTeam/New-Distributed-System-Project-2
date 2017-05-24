@@ -264,13 +264,9 @@ public class Subscrible {
 //					}
 //				}
 				
-				try {System.out.println("6");
-//					try{
-//						isUnsubscribe = unsubscribe.get();System.out.println("7");
-//					}catch(Exception e){
-//						System.out.println("抓住出错");
-//					}System.out.println("7。1");
-					if (isUnsubscribe) {System.out.println("8");
+					try{
+						isUnsubscribe = unsubscribe.get();System.out.println("7");
+						if (isUnsubscribe) {System.out.println("8");
 						
 						StopWatch watch = new StopWatch();
 						watch.start();
