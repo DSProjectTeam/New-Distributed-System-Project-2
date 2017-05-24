@@ -25,7 +25,7 @@ public class Subscrible {
 	private HashMap<String, Resource> resources;
 	private ArrayList<String> lastStateServerList;
 	private ArrayList<String> serverList;
-	private static ArrayList<String> newServers;
+//	private static ArrayList<String> newServers;
 	private boolean updated = false;
 	private boolean serverListUpdated = false;
 	DataInputStream in;
@@ -42,7 +42,7 @@ public class Subscrible {
 		this.serverList = serverList;
 		this.lastStateServerList = new ArrayList<String>(serverList);
 //		this.newServers.clear();
-		this.newServers =new ArrayList<String>();
+//		this.newServers =new ArrayList<String>();
 		this.in = in;
 		this.out = out;
 		this.hasDebugOption = hasDebugOption;
@@ -467,7 +467,7 @@ public class Subscrible {
             if(!this.lastStateServerList.contains(server)){
             	System.out.println("serverList updated");
 				input.put("relay", "false");						
-				ExecutorService executorServiceForward = Executors.newFixedThreadPool(newServers.size());
+				ExecutorService executorServiceForward = Executors.newFixedThreadPool(1);
 				
 				String[] hostAndPortTemp = server.split(":");
 				String tempIP = hostAndPortTemp[0];
