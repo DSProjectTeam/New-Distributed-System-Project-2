@@ -184,7 +184,7 @@ public class Subscrible {
 			//relay is true
 			
 			while(isUnsubscribe==false){System.out.println("1");
-				QueryReturn queryReturn= ServerHandler.handlingSubscribe(id, name, tags, description, uri, channel, owner, relay, resources, socket, hostName);System.out.println("1.1");System.out.println(serverList.size());
+				QueryReturn queryReturn= ServerHandler.handlingSubscribe(id, name, tags, description, uri, channel, owner, relay, resources, socket, hostName);System.out.println("1.1");System.out.println("1.1");
 				Subscrible Subscrible = new Subscrible(resources,serverList,in,out,hasDebugOption);System.out.println("1.2");
 				
 				//invalid template or valid template but no current match, pending.
@@ -265,7 +265,11 @@ public class Subscrible {
 //				}
 				
 				try {System.out.println("6");
-					isUnsubscribe = unsubscribe.get();System.out.println("7");
+//					try{
+//						isUnsubscribe = unsubscribe.get();System.out.println("7");
+//					}catch(Exception e){
+//						System.out.println("抓住出错");
+//					}System.out.println("7。1");
 					if (isUnsubscribe) {System.out.println("8");
 						
 						StopWatch watch = new StopWatch();
