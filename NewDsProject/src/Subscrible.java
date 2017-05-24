@@ -114,7 +114,7 @@ public class Subscrible {
 							jsonObject.put("response", "success");
 							jsonObject.put("id", id);
 							subscrible.sendMessage(jsonObject);
-							subscrible.checkUpdates(id, name, tags, description, uri, channel, owner, relay,socket, hostName);
+							subscrible.checkUpdates(id, name, tags, description, uri, channel, owner, relay,socket, hostName,input);
 						}
 					}
 				}else{
@@ -132,7 +132,7 @@ public class Subscrible {
 //							}
 //							
 //						}
-						subscrible.checkUpdates(id, name, tags, description, uri, channel, owner, relay,socket, hostName);
+//						subscrible.checkUpdates(id, name, tags, description, uri, channel, owner, relay,socket, hostName);
 					
 				}
 				
@@ -182,7 +182,7 @@ public class Subscrible {
 					}else{
 						//valid template, but no match currently, pending
 						if (queryReturn.reponseMessage.get("response").toString().equals("pending")) {
-							Subscrible.checkUpdates(id, name, tags, description, uri, channel, owner, relay,socket, hostName);
+							Subscrible.checkUpdates(id, name, tags, description, uri, channel, owner, relay,socket, hostName,input);
 							System.out.println("pending!!");
 						}
 					}
@@ -200,7 +200,7 @@ public class Subscrible {
 							}
 							
 						}
-						Subscrible.checkUpdates(id, name, tags, description, uri, channel, owner, relay,socket, hostName);
+						Subscrible.checkUpdates(id, name, tags, description, uri, channel, owner, relay,socket, hostName,input);
 					
 				}
 				
@@ -224,28 +224,29 @@ public class Subscrible {
 							e.printStackTrace();
 						}		
 					}
-				} else{System.out.print("5");
-					if (!newServers.isEmpty()){	
-						input.put("relay", "false");						
-						ExecutorService executorServiceForward = Executors.newFixedThreadPool(newServers.size());
-						for(String server:newServers){
-								String[] hostAndPortTemp = server.split(":");
-								String tempIP = hostAndPortTemp[0];
-								Integer tempPort = Integer.parseInt(hostAndPortTemp[1]);
-
-								try {
-									if(!InetAddress.getLocalHost().getHostAddress().equals(tempIP)){
-											
-										WaitSubRelay2 relay2 = new WaitSubRelay2(input, tempIP, tempPort, out, id, relayHitCounter,in,isSecurePort,hasDebugOption);
-										relay2.run();
-									}
-								} catch (Exception e) {
-									e.printStackTrace();
-								}		
-						}
-						newServers.clear();
-					}
-				}
+				} 
+//				else{System.out.print("5");
+//					if (!newServers.isEmpty()){	
+//						input.put("relay", "false");						
+//						ExecutorService executorServiceForward = Executors.newFixedThreadPool(newServers.size());
+//						for(String server:newServers){
+//								String[] hostAndPortTemp = server.split(":");
+//								String tempIP = hostAndPortTemp[0];
+//								Integer tempPort = Integer.parseInt(hostAndPortTemp[1]);
+//
+//								try {
+//									if(!InetAddress.getLocalHost().getHostAddress().equals(tempIP)){
+//											
+//										WaitSubRelay2 relay2 = new WaitSubRelay2(input, tempIP, tempPort, out, id, relayHitCounter,in,isSecurePort,hasDebugOption);
+//										relay2.run();
+//									}
+//								} catch (Exception e) {
+//									e.printStackTrace();
+//								}		
+//						}
+//						newServers.clear();
+//					}
+//				}
 				
 				try {System.out.println("6");
 					isUnsubscribe = unsubscribe.get();System.out.println("7");
@@ -393,14 +394,14 @@ public class Subscrible {
 	 * monitor the status of the resources hashmap, if has changed and match resource template. write output.
 	 * */
 	public void checkUpdates(String id, String name,String[] tags,String description,String uri,String channel,String owner,
-			boolean relay,ServerSocket socket,String hostName){
+			boolean relay,ServerSocket socket,String hostName,JSONObject input){
 			new Timer().schedule(new TimerTask() {
 			
 			@Override
 			public void run() {
 			checkUpdated(id, name, tags, description, uri, channel, owner, relay, socket, hostName);
 			if (relay==true) {
-				checkUpdatedServer();
+				checkUpdatedServer(input,id);
 			}
 			
 			}
@@ -455,22 +456,39 @@ public class Subscrible {
 	 * check updates in the serverList, add newly added servers to newServers ArrayList.
 	 * @return if serverList has updated.
 	 */
-	private boolean checkUpdatedServer() {
-		newServers.clear();
+	private boolean checkUpdatedServer(JSONObject input, String id) {
+//		newServers.clear();
         if(this.serverList.size()!=this.lastStateServerList.size()){
         	System.out.println("serverList updated");
-        	this.serverListUpdated = false;
+//        	this.serverListUpdated = false;
         }
         for(String server: this.serverList)
         {
             if(!this.lastStateServerList.contains(server)){
             	System.out.println("serverList updated");
-            	this.newServers.add(server);
-            	this.serverListUpdated = false;
+				input.put("relay", "false");						
+				ExecutorService executorServiceForward = Executors.newFixedThreadPool(newServers.size());
+				
+				String[] hostAndPortTemp = server.split(":");
+				String tempIP = hostAndPortTemp[0];
+				Integer tempPort = Integer.parseInt(hostAndPortTemp[1]);
+
+				try {
+					if(!InetAddress.getLocalHost().getHostAddress().equals(tempIP)){
+							
+						WaitSubRelay2 relay2 = new WaitSubRelay2(input, tempIP, tempPort, out, id, relayHitCounter,in,isSecurePort,hasDebugOption);
+						relay2.run();
+					}
+				} catch (Exception e) {
+					e.printStackTrace();
+				}		
+				
+//            	this.newServers.add(server);
+//            	this.serverListUpdated = false;
             }
                 
         }
-        this.serverListUpdated = true;
+//        this.serverListUpdated = true;
 		
 	    this.lastStateServerList.clear();
 	    this.lastStateServerList = new ArrayList<String>(this.serverList);
