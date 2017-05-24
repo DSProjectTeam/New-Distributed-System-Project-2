@@ -83,16 +83,16 @@ public class WaitSubRelay2 implements Runnable{
 				/*给其他服务器发unsubscribe命令后， 取出resultSize， 
 				 * 否则只是正常的将从其他服务器接收到的资源传送给client*/
 				while(true){
-
-					//监听unsubscribe命令
-					isUnsubscribe = unsubscribe.get();
-					if (isUnsubscribe==true) {
-						JSONObject UnsubJSONObject = new JSONObject();
-						UnsubJSONObject.put("command", "UNSUBSCRIBE");
-						UnsubJSONObject.put("id", id);
-						out.writeUTF(UnsubJSONObject.toJSONString());
+					if(unsubscribe.isDone()){
+						//监听unsubscribe命令
+						isUnsubscribe = unsubscribe.get();
+						if (isUnsubscribe==true) {
+							JSONObject UnsubJSONObject = new JSONObject();
+							UnsubJSONObject.put("command", "UNSUBSCRIBE");
+							UnsubJSONObject.put("id", id);
+							out.writeUTF(UnsubJSONObject.toJSONString());
+						}
 					}
-					
 					//input > 0
 					/*if (in.available()>0) {
 						JSONParser parser = new JSONParser();
