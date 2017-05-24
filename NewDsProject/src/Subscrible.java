@@ -98,7 +98,7 @@ public class Subscrible {
 		//loop until receive unsubscribe message
 		if (relay == false) {
 //			System.out.println("1");
-			while(isUnsubscribe == false){
+			if(isUnsubscribe == false){
 				
 				QueryReturn queryReturn= ServerHandler.handlingSubscribe(id, name, tags, description, uri, channel, owner, relay, resources, socket, hostName);
 				//Subscrible Subscrible = new Subscrible(resources,serverList,in,out,hasDebugOption);
@@ -109,7 +109,7 @@ public class Subscrible {
 					//invalid template
 					if (queryReturn.reponseMessage.get("response").toString().equals("error")) {
 						subscrible.sendMessage(queryReturn.reponseMessage);
-						break;
+//						break;///////////////////
 					}else{
 						//valid template, but no match currently, pending
 						if (queryReturn.reponseMessage.get("response").toString().equals("pending")) {
@@ -152,34 +152,36 @@ public class Subscrible {
 				
 				System.out.println("asfasf");
 				//if unsubscribe, break the loop, return result size
-				if(unsubscribe.isDone()){
-					try {System.out.println(unsubscribe.isDone());
-						isUnsubscribe = unsubscribe.get();System.out.println(unsubscribe.isDone());
-						if (isUnsubscribe) {
-							JSONObject jsonObject = new JSONObject();
-							/*if(subscrible.matchList.size()>1){
+				while(true){
+					if(unsubscribe.isDone()){
+						try {System.out.println(unsubscribe.isDone());
+							isUnsubscribe = unsubscribe.get();System.out.println(unsubscribe.isDone());
+							if (isUnsubscribe) {
+								JSONObject jsonObject = new JSONObject();
+								/*if(subscrible.matchList.size()>1){
+									
+									//remove the {"id":xxx} or {"resposne":"success"}
+									subscrible.matchList.remove(0);
+									System.out.println(subscrible.matchList.toString());
+									jsonObject.put("resultSize", subscrible.matchList.size());
+								}
+								else{
+									jsonObject.put("resultSize", subscrible.matchList.size());
+								}*/
+								jsonObject.put("resultSize", subscrible.hitCounter);
+								subscrible.sendMessage(jsonObject);
+		
+		//						out.writeUTF(jsonObject.toJSONString());		
+		//						out.flush();
 								
-								//remove the {"id":xxx} or {"resposne":"success"}
-								subscrible.matchList.remove(0);
-								System.out.println(subscrible.matchList.toString());
-								jsonObject.put("resultSize", subscrible.matchList.size());
+								//Thread.yield();
+								break;//////////////////////////
 							}
-							else{
-								jsonObject.put("resultSize", subscrible.matchList.size());
-							}*/
-							jsonObject.put("resultSize", subscrible.hitCounter);
-							subscrible.sendMessage(jsonObject);
-	
-	//						out.writeUTF(jsonObject.toJSONString());		
-	//						out.flush();
+						} catch (Exception e) {
 							
-							//Thread.yield();
-							break;
 						}
-					} catch (Exception e) {
-						
-					}
-				}//if isDone ends.
+					}//if isDone ends.
+				}//while true ends
 			}
 		}else{
 			//relay is true, not in a loop
