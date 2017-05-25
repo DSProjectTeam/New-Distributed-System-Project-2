@@ -94,7 +94,6 @@ public class Client {
 			out.flush();
 			
 			//print part of debug information.
-			System.out.println("command sent to server: "+userInput.toJSONString());
 			if(hasDebugOption){
 			    System.out.println("-setting debug on");
 			    System.out.println(commandType+" to "+host+":"+port);

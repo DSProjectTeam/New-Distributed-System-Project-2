@@ -51,7 +51,7 @@ public class ServerThread extends Thread{
 	
 	private String secret;
 	
-	public ServerSocket serverSocket;
+	public String serverSocket;
 	
 	public SSLSocket sslClientSocket;
 	
@@ -75,7 +75,7 @@ public class ServerThread extends Thread{
 	
 	
 	//thread handles unsecured connection
-	public ServerThread(Socket socket, HashMap<String, Resource> resources, String secret, ServerSocket serverSocket,
+	public ServerThread(Socket socket, HashMap<String, Resource> resources, String secret, String serverSocket,
 			ArrayList<String> serverList, boolean hasDebugOption, int interval, String ServerHostName, boolean isSecurePort){
 		//try {
 			this.clientSocket = socket;
@@ -517,7 +517,7 @@ public class ServerThread extends Thread{
 	 */
 	public synchronized void handlingFetch(String name,String[] tags,
 			String description, String uri,String channel, 
-			String owner,HashMap<String, Resource> resources, ServerSocket serverSocket, String hostName){
+			String owner,HashMap<String, Resource> resources, String ezserver, String hostName){
 		String errorMessage;
 		String response;
 		JSONObject serverResponse = new JSONObject();
@@ -619,8 +619,7 @@ public class ServerThread extends Thread{
 								matchResource.put(ConstantEnum.CommandArgument.owner.name(), "*");
 							}
 							
-							Integer ezport = serverSocket.getLocalPort();
-							String ezserver = hostName+":"+ezport.toString();
+
 							matchResource.put(ConstantEnum.CommandArgument.ezserver.name(), ezserver);
 							matchResource.put("resourceSize", file.length());
 							

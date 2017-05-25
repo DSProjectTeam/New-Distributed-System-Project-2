@@ -335,7 +335,7 @@ public class ServerHandler {
 	 */
 	public synchronized static QueryReturn handlingQuery(String name_query,String[] tags_query,
 			String description_query, String uri_query,String channel_query, 
-			String owner_query, boolean relay,HashMap<String, Resource> resources, ServerSocket serverSocket,String hostName){
+			String owner_query, boolean relay,HashMap<String, Resource> resources, String ezserver,String hostName){
 		/**鐢ㄦ潵瀛樻斁婊¤冻template鐨剅esource*/
 		ArrayList<Resource> matchResourceSet = new ArrayList<Resource>();
 		String errorMessage;
@@ -414,9 +414,7 @@ public class ServerHandler {
 									MatchResouce.put(ConstantEnum.CommandArgument.owner.name(), "*");
 								}
 								
-								Integer ezport = serverSocket.getLocalPort();
-								/*String ezserver = serverSocket.getInetAddress().toString()+":"+ezport.toString();*/
-								String ezserver = hostName+":"+ezport.toString();
+
 								MatchResouce.put(ConstantEnum.CommandArgument.ezserver.name(), ezserver);
 								
 								/*returnArray1.add(MatchResouce);*/
@@ -519,9 +517,7 @@ public class ServerHandler {
 									MatchResouce.put(ConstantEnum.CommandArgument.owner.name(), "*");
 								}
 								
-								Integer ezport = serverSocket.getLocalPort();
-	
-								String ezserver = hostName+":"+ezport.toString();
+
 								MatchResouce.put(ConstantEnum.CommandArgument.ezserver.name(), ezserver);
 								
 								/*returnArray1.add(MatchResouce);*/
@@ -574,7 +570,7 @@ public class ServerHandler {
 	 */
 	public synchronized static QueryReturn handlingSubscribe(String id, String name_query,String[] tags_query,
 			String description_query, String uri_query,String channel_query, 
-			String owner_query, boolean relay,HashMap<String, Resource> resources, ServerSocket serverSocket,String hostName){
+			String owner_query, boolean relay,HashMap<String, Resource> resources, String ezserver,String hostName){
 		/**鐢ㄦ潵瀛樻斁婊¤冻template鐨剅esource*/
 		ArrayList<Resource> matchResourceSet = new ArrayList<Resource>();
 		String errorMessage;
@@ -653,9 +649,7 @@ public class ServerHandler {
 									MatchResouce.put(ConstantEnum.CommandArgument.owner.name(), "*");
 								}
 								
-								Integer ezport = serverSocket.getLocalPort();
-								/*String ezserver = serverSocket.getInetAddress().toString()+":"+ezport.toString();*/
-								String ezserver = hostName+":"+ezport.toString();
+
 								MatchResouce.put(ConstantEnum.CommandArgument.ezserver.name(), ezserver);
 								
 								/*returnArray1.add(MatchResouce);*/
@@ -758,9 +752,7 @@ public class ServerHandler {
 									MatchResouce.put(ConstantEnum.CommandArgument.owner.name(), "*");
 								}
 								
-								Integer ezport = serverSocket.getLocalPort();
-	
-								String ezserver = hostName+":"+ezport.toString();
+
 								MatchResouce.put(ConstantEnum.CommandArgument.ezserver.name(), ezserver);
 								
 								/*returnArray1.add(MatchResouce);*/
@@ -849,7 +841,7 @@ public class ServerHandler {
 	 * @return the JSON object to be returned to client
 	 */
 	public synchronized static QueryData handlingQueryWithRelay(String inputMessage,HashMap<String, Resource> resources, 
-			ServerSocket serverSocket, ArrayList<String> serverList, boolean hasDebugOption){
+			String serverSocket, ArrayList<String> serverList, boolean hasDebugOption){
 			JSONObject inputQuerry = new JSONObject();
 			ArrayList<JSONObject> arrayList = new ArrayList<>();
 			QueryData otherReturn = new QueryData();
@@ -964,7 +956,7 @@ public class ServerHandler {
 	
 	/**secure query operation with relay*/
 	public synchronized static QueryData handlingSecureQueryWithRelay(String inputMessage,HashMap<String, Resource> resources, 
-			ServerSocket serverSocket, ArrayList<String> secureServerList, boolean hasDebugOption){
+			String serverSocket, ArrayList<String> secureServerList, boolean hasDebugOption){
 			
 			System.setProperty("java.net.ssl.trustStore", "clientKeystore/aGreatName");
 			SSLSocketFactory sslSocketFactory = (SSLSocketFactory) SSLSocketFactory.getDefault();
