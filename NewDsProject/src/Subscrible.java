@@ -276,10 +276,10 @@ public class Subscrible {
 //									watch.stop();
 									//remove the {"id":xxx} or {"resposne":"success"}
 							
-									if(!Subscrible.matchList.isEmpty()){
+									/*if(!Subscrible.matchList.isEmpty()){
 										Subscrible.matchList.remove(0);
 									}
-
+*/
 									
 									JSONObject jsonObject = new JSONObject();
 									System.out.println("hits from local servers"+Subscrible.matchList.size()+"total hits from other servers"+relayHitCounter);
