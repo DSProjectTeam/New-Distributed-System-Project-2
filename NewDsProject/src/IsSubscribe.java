@@ -25,6 +25,7 @@ public class IsSubscribe implements Callable<Boolean>{
 	
 	@Override
 	public Boolean call() {
+		Thread.currentThread().setPriority(Thread.MAX_PRIORITY);
 		try {
 			while(true){
 				if (in.available()>0) {
@@ -57,7 +58,7 @@ public class IsSubscribe implements Callable<Boolean>{
 				}*/
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
+			//e.printStackTrace();
 		}
 		return isUnsubscribe;
 		

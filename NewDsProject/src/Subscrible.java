@@ -35,7 +35,7 @@ public class Subscrible {
 	ArrayList<JSONObject> matchList;
 	ArrayList<JSONObject> matchBeforeChangeList;
 	int hitCounter;
-	volatile static int  relayHitCounter;
+	volatile static int relayHitCounter = 0;
 	
 	public Subscrible(HashMap<String, Resource> resources,ArrayList<String> serverList, DataInputStream in,DataOutputStream out,boolean hasDebugOption){
 		this.resources = resources;
@@ -49,7 +49,7 @@ public class Subscrible {
 		this.hasDebugOption = hasDebugOption;
 		this.matchList = new ArrayList<>();
 		int hitCounter = 0;
-		this.relayHitCounter = 0;
+		//this.relayHitCounter = 0;
 		this.isSecurePort = isSecurePort;
 		this.matchBeforeChangeList = new ArrayList<>();
 	}
@@ -117,7 +117,7 @@ public class Subscrible {
 							jsonObject.put("response", "success");
 							jsonObject.put("id", id);
 							subscrible.sendMessage(jsonObject);
-							subscrible.checkUpdates(id, name, tags, description, uri, channel, owner, relay,socket, hostName,input);
+							subscrible.checkUpdates(id, name, tags, description, uri, channel, owner, relay,socket, hostName,input, subscrible, unsubscribe);
 						}
 					}
 				}else{
@@ -145,7 +145,7 @@ public class Subscrible {
 							}
 							
 						}*/
-						subscrible.checkUpdates(id, name, tags, description, uri, channel, owner, relay,socket, hostName,input);
+						subscrible.checkUpdates(id, name, tags, description, uri, channel, owner, relay,socket, hostName,input, subscrible, unsubscribe);
 
 					
 				}
@@ -200,7 +200,7 @@ public class Subscrible {
 					}else{
 						//valid template, but no match currently, pending
 						if (queryReturn.reponseMessage.get("response").toString().equals("pending")) {
-							Subscrible.checkUpdates(id, name, tags, description, uri, channel, owner, relay,socket, hostName,input);
+							Subscrible.checkUpdates(id, name, tags, description, uri, channel, owner, relay,socket, hostName,input, Subscrible, unsubscribe);
 							System.out.println("pending!!");
 						}
 					}
@@ -219,7 +219,7 @@ public class Subscrible {
 							Subscrible.matchBeforeChangeList.add(jsonObject);
 							
 						}
-						Subscrible.checkUpdates(id, name, tags, description, uri, channel, owner, relay,socket, hostName,input);
+						Subscrible.checkUpdates(id, name, tags, description, uri, channel, owner, relay,socket, hostName,input, Subscrible, unsubscribe);
 					
 				}
 				
@@ -236,8 +236,13 @@ public class Subscrible {
 							if(!InetAddress.getLocalHost().getHostAddress().equals(tempIP)){System.out.println("去监听了");
 								
 								//WaitSubRelay2 现在自己可以监听client端的unsubscribe命令。
-								WaitSubRelay2 relay2 = new WaitSubRelay2(input, tempIP, tempPort, out, id, relayHitCounter,in,isSecurePort,hasDebugOption);
+								WaitSubRelay2 relay2 = new WaitSubRelay2(input, tempIP, tempPort, out, id, Subscrible,in,isSecurePort,hasDebugOption,unsubscribe);
 								relay2.run();
+								System.out.println("12");
+								new Thread(relay2).start();
+								
+								System.out.println("12");
+								
 							}
 						} catch (Exception e) {
 							e.printStackTrace();
@@ -270,9 +275,16 @@ public class Subscrible {
 				while(true){
 					if(unsubscribe.isDone()){
 						try{
-							isUnsubscribe = unsubscribe.get();System.out.println(unsubscribe.isDone());System.out.println("7");
+							isUnsubscribe = unsubscribe.get();
+							//System.out.println(unsubscribe.isDone());
+							//System.out.println("7");
 							if (isUnsubscribe) {System.out.println("8");
+							StopWatch omega = new StopWatch();
+							omega.start();
+							while(omega.getTime()<1000){
 								
+							}
+							omega.stop();
 //								StopWatch watch = new StopWatch();
 //								watch.start();
 								
@@ -289,12 +301,11 @@ public class Subscrible {
 
 									
 									JSONObject jsonObject = new JSONObject();
-									System.out.println("hits from local servers: "+Subscrible.matchList.size()+" total hits from other servers: "+relayHitCounter);
+									System.out.println("hits from local servers"+Subscrible.matchList.size()+"total hits from other servers"+relayHitCounter);
 									
 									jsonObject.put("resultSize", Subscrible.matchList.size()+relayHitCounter);
-									Subscrible.sendMessage(jsonObject);
-//									out.writeUTF(jsonObject.toJSONString());		
-//									out.flush();
+									out.writeUTF(jsonObject.toJSONString());		
+									out.flush();
 									Thread.yield();
 									break;
 //								}
@@ -419,14 +430,14 @@ public class Subscrible {
 	 * monitor the status of the resources hashmap, if has changed and match resource template. write output.
 	 * */
 	public void checkUpdates(String id, String name,String[] tags,String description,String uri,String channel,String owner,
-			boolean relay,ServerSocket socket,String hostName,JSONObject input){
+			boolean relay,ServerSocket socket,String hostName,JSONObject input,Subscrible sub,Future<Boolean> unsubscribe){
 			new Timer().schedule(new TimerTask() {
 			
 			@Override
 			public void run() {
 			checkUpdated(id, name, tags, description, uri, channel, owner, relay, socket, hostName);
 			if (relay==true) {
-				checkUpdatedServer(input,id);
+				checkUpdatedServer(input,id,sub,unsubscribe);
 			}
 			
 			}
@@ -442,7 +453,7 @@ public class Subscrible {
 			if (temp.hasMatch==true) {
 				for(JSONObject jsonObject : temp.returnList){
 					
-					if (matchList.isEmpty()&&!this.matchBeforeChangeList.contains(jsonObject)) {
+					if (matchList.isEmpty()&&!this.matchBeforeChangeList.contains(jsonObject)&&!jsonObject.containsKey("response")) {
 						try {
 							this.out.writeUTF(jsonObject.toJSONString());//delete this line to avoid duplicate?
 							this.hitCounter++;
@@ -454,7 +465,7 @@ public class Subscrible {
 						}
 						matchList.add(jsonObject);
 					}else{
-						if(!matchList.contains(jsonObject)&&!this.matchBeforeChangeList.contains(jsonObject)){
+						if(!matchList.contains(jsonObject)&&!this.matchBeforeChangeList.contains(jsonObject)&&!jsonObject.containsKey("response")){
 							try {
 								this.out.writeUTF(jsonObject.toJSONString());
 								this.hitCounter++;
@@ -482,7 +493,7 @@ public class Subscrible {
 	 * check updates in the serverList, add newly added servers to newServers ArrayList.
 	 * @return if serverList has updated.
 	 */
-	private boolean checkUpdatedServer(JSONObject input, String id) {
+	private boolean checkUpdatedServer(JSONObject input, String id,Subscrible sub,Future<Boolean> unsubscribe) {
 //		newServers.clear();
         if(this.serverList.size()!=this.lastStateServerList.size()){
         	System.out.println("serverList updated");
@@ -502,7 +513,7 @@ public class Subscrible {
 				try {
 					if(!InetAddress.getLocalHost().getHostAddress().equals(tempIP)){
 							
-						WaitSubRelay2 relay2 = new WaitSubRelay2(input, tempIP, tempPort, out, id, relayHitCounter,in,isSecurePort,hasDebugOption);
+						WaitSubRelay2 relay2 = new WaitSubRelay2(input, tempIP, tempPort, out, id, sub,in,isSecurePort,hasDebugOption,unsubscribe);
 						relay2.run();
 					}
 				} catch (Exception e) {
