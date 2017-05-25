@@ -23,22 +23,27 @@ public class WaitSubRelay2 implements Runnable{
 	DataOutputStream out;
 	DataInputStream in;
 	JSONObject subscribeRequest;
-	int relayHitCounter;
+	//volatile int relayHitCounter;
 	boolean isUnsubscribe = false;
 	boolean isSecurePort;
 	boolean hasDebugOption;
+	Future<Boolean> unsubscribe;
+	Subscrible sub;
 	
 	public WaitSubRelay2(JSONObject subscribeRequest, String host, int port, 
-			DataOutputStream clientOut,String id, int relayHitCounter, DataInputStream clientInput, boolean isSecurePort,boolean hasDebugOption) {
+			DataOutputStream clientOut,String id, Subscrible sub, DataInputStream clientInput, boolean isSecurePort,boolean hasDebugOption,
+			Future<Boolean> unsubscribe) {
 		this.subscribeRequest = subscribeRequest;
 		this.host = host;
 		this.port = port;
 		this.id = id;
 		this.clientOutput = clientOut;
 		this.clientInput = clientInput;
-		this.relayHitCounter = relayHitCounter;
+		//this.relayHitCounter = relayHitCounter;
 		this.isSecurePort = isSecurePort;
 		this.hasDebugOption = hasDebugOption;
+		this.unsubscribe = unsubscribe;
+		this.sub = sub;
 	}
 	
 	@Override
@@ -46,8 +51,8 @@ public class WaitSubRelay2 implements Runnable{
 		Thread.currentThread().setPriority(Thread.MAX_PRIORITY);
 		
 		//这里也使用IsSubscribe来监听unsubscribe
-		ExecutorService executorService = Executors.newFixedThreadPool(1);
-		Future<Boolean> unsubscribe = executorService.submit(new IsSubscribe(clientInput, id,hasDebugOption));
+		/*ExecutorService executorService = Executors.newFixedThreadPool(1);
+		Future<Boolean> unsubscribe = executorService.submit(new IsSubscribe(clientInput, id,hasDebugOption));*/
 		
 		int hitCount = 0;
 		
@@ -86,13 +91,15 @@ public class WaitSubRelay2 implements Runnable{
 				while(true){
 					if(unsubscribe.isDone()){
 						//监听unsubscribe命令
-						isUnsubscribe = unsubscribe.get();
-						if (isUnsubscribe==true) {
+						//isUnsubscribe = unsubscribe.get();
+						//if (isUnsubscribe==true) {
 							JSONObject UnsubJSONObject = new JSONObject();
 							UnsubJSONObject.put("command", "UNSUBSCRIBE");
 							UnsubJSONObject.put("id", id);
 							out.writeUTF(UnsubJSONObject.toJSONString());
-						}
+							//System.out.println("666666666");
+							
+						//}
 					}
 					//input > 0
 					/*if (in.available()>0) {
@@ -121,8 +128,11 @@ public class WaitSubRelay2 implements Runnable{
 								clientOutput.flush();
 							}else{
 								hitCount = Integer.parseInt(message.get("resultSize").toString());
-								relayHitCounter = relayHitCounter+hitCount;
-								break;
+								int temp = sub.relayHitCounter;
+								temp = temp+ hitCount;
+								sub.relayHitCounter = temp;
+								//relayHitCounter = relayHitCounter+hitCount;
+								System.out.println(message.toJSONString()+"  "+sub.relayHitCounter+"  "+temp);
 							}
 						}catch(SocketTimeoutException e){
 							//should NOT be any "break" here!, the while(true) loop will continue.
@@ -132,13 +142,17 @@ public class WaitSubRelay2 implements Runnable{
 						if (in.available()>0) {
 							
 							JSONObject message = (JSONObject) parser.parse(in.readUTF());
-							
+							System.out.println(message.toJSONString()+"wawawawawa!");
 							if(!message.containsKey("resultSize")){
 								clientOutput.writeUTF(message.toJSONString());
 								clientOutput.flush();
 							}else{
 								hitCount = Integer.parseInt(message.get("resultSize").toString());
-								relayHitCounter = relayHitCounter+hitCount;
+								int temp = sub.relayHitCounter;
+								temp = temp+ hitCount;
+								sub.relayHitCounter = temp;
+								//relayHitCounter = relayHitCounter+hitCount;
+								System.out.println(message.toJSONString()+"  "+sub.relayHitCounter+"  "+temp);
 								break;
 							}
 						}
