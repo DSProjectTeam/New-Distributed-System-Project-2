@@ -76,6 +76,7 @@ public class Subscrible {
 		boolean isUnsubscribe =false;
 		boolean forwarded = false;
 		boolean unsubscriptionForwarded = false;
+		//int counter = 0;
 		
 		String [] tags = ServerThread.handleTags(template_resource_sub.get(ConstantEnum.CommandArgument.tags.name()).toString());
 		String name = template_resource_sub.get(ConstantEnum.CommandArgument.name.name()).toString();
@@ -93,7 +94,7 @@ public class Subscrible {
 		
 		//create new callabe thread to monitor unsubscribe status
 		ExecutorService executorService = Executors.newFixedThreadPool(1);
-		Future<Boolean> unsubscribe = executorService.submit(new IsSubscribe(in, id,hasDebugOption));
+		Future<Boolean> unsubscribe = executorService.submit(new IsSubscribe(in, id,hasDebugOption,isSecurePort));
 		
 		//loop until receive unsubscribe message
 		if (relay == false) {
@@ -237,9 +238,10 @@ public class Subscrible {
 								
 								//WaitSubRelay2 现在自己可以监听client端的unsubscribe命令。
 								WaitSubRelay2 relay2 = new WaitSubRelay2(input, tempIP, tempPort, out, id, Subscrible,in,isSecurePort,hasDebugOption,unsubscribe);
-								relay2.run();
+								//relay2.run();
 								System.out.println("12");
 								new Thread(relay2).start();
+								//counter++;
 								
 								System.out.println("12");
 								
@@ -249,28 +251,7 @@ public class Subscrible {
 						}		
 					}
 				} 
-//				else{System.out.print("5");
-//					if (!newServers.isEmpty()){	
-//						input.put("relay", "false");						
-//						ExecutorService executorServiceForward = Executors.newFixedThreadPool(newServers.size());
-//						for(String server:newServers){
-//								String[] hostAndPortTemp = server.split(":");
-//								String tempIP = hostAndPortTemp[0];
-//								Integer tempPort = Integer.parseInt(hostAndPortTemp[1]);
-//
-//								try {
-//									if(!InetAddress.getLocalHost().getHostAddress().equals(tempIP)){
-//											
-//										WaitSubRelay2 relay2 = new WaitSubRelay2(input, tempIP, tempPort, out, id, relayHitCounter,in,isSecurePort,hasDebugOption);
-//										relay2.run();
-//									}
-//								} catch (Exception e) {
-//									e.printStackTrace();
-//								}		
-//						}
-//						newServers.clear();
-//					}
-//				}
+
 				
 				while(true){
 					if(unsubscribe.isDone()){
@@ -315,108 +296,8 @@ public class Subscrible {
 						}
 					}
 				}
-				System.out.println("10");
-				//below begin to forward the subscription to other servers.
-				/*if(forwarded==false){
-					if(!serverList.isEmpty()){
-						//change relay field to false.
-						input.put("relay", "false");						
-						ExecutorService executorServiceForward = Executors.newFixedThreadPool(serverList.size());
-						for(String server: serverList){
-							String[] hostAndPortTemp = server.split(":");
-							String tempIP = hostAndPortTemp[0];
-							Integer tempPort = Integer.parseInt(hostAndPortTemp[1]);
-
-							try {
-								if(!InetAddress.getLocalHost().getHostAddress().equals(tempIP)){
-									WaitSubRelay2 relay2 = new WaitSubRelay2(input, tempIP, tempPort, out, id, relayHitCounter);
-									relay2.run();
-									
-									Future<Integer> hitCount = executorServiceForward.submit(new WaitSubRelayResponse(input, 
-											tempIP, tempPort,out, id));
-										//Future返回如果没有完成，则一直循环等待，直到Future返回完成
-										while(!hitCount.isDone());
-										relayHitCounter += hitCount.get();	
-								}
-							} catch (Exception e) {
-								e.printStackTrace();
-							}		
-						}
-					} 
-					forwarded = true;
-				}
+				//System.out.println("counter "+counter);
 				
-				//below check serverList update and forward to them, also close threads to no-existed servers.
-				else{//forwarded==true, forwarded already
-					if (!newServers.isEmpty()){	
-						input.put("relay", "false");						
-						ExecutorService executorServiceForward = Executors.newFixedThreadPool(newServers.size());
-						for(String server:newServers){
-								String[] hostAndPortTemp = server.split(":");
-								String tempIP = hostAndPortTemp[0];
-								Integer tempPort = Integer.parseInt(hostAndPortTemp[1]);
-
-								try {
-									if(!InetAddress.getLocalHost().getHostAddress().equals(tempIP)){
-											Future<Integer> hitCount = executorServiceForward.submit(new WaitSubRelayResponse(input, 
-												tempIP, tempPort,out, id));
-											//Future返回如果没有完成，则一直循环等待，直到Future返回完成
-											while(!hitCount.isDone());
-											relayHitCounter += hitCount.get();	
-										WaitSubRelay2 relay2 = new WaitSubRelay2(input, tempIP, tempPort, out, id, relayHitCounter);
-										relay2.run();
-									}
-								} catch (Exception e) {
-									e.printStackTrace();
-								}		
-						}
-						newServers.clear();
-					}
-				}
-				
-				//once unsubscribe, break the loop, return result size
-				try {
-					StopWatch swatch = new StopWatch();
-					isUnsubscribe = unsubscribe.get();
-					if ((isUnsubscribe==true)&&(unsubscriptionForwarded==false)) {
-						//remove the {"id":xxx} or {"resposne":"success"}
-						Subscrible.matchList.remove(0);
-						//send unsubscribe JSONObjects to all the servers. the responses from the servers containing resultSizes will be caught in the while loop above.
-						for(String server: serverList){
-							String[] hostAndPortTemp = server.split(":");
-							String tempIP = hostAndPortTemp[0];
-							Integer tempPort = Integer.parseInt(hostAndPortTemp[1]);
-							if(!InetAddress.getLocalHost().getHostAddress().equals(tempIP)){
-								JSONObject UnsubJSONObject = new JSONObject();
-								UnsubJSONObject.put("command", "UNSUBSCRIBE");
-								UnsubJSONObject.put("id", id);
-								Socket serverSocket = new Socket(tempIP,tempPort);
-								DataOutputStream serversOut = new DataOutputStream(serverSocket.getOutputStream());
-								serversOut.writeUTF(UnsubJSONObject.toJSONString());
-								serversOut.flush();
-							}
-							unsubscriptionForwarded = true;
-						}
-						swatch.start();
-					}
-//						handlingUnsubscribe((ArrayList<String> subscriberList, String id, JSONObject jsonObject,HashMap<String, Resource> resources, 
-//								ServerSocket serverSocket, ArrayList<String> serverList, boolean hasDebugOption));
-						
-					//if unsubscription have been sent, then wait 1300ms to receive resultSizes from server to be responded.
-					if ((isUnsubscribe==true)&&(unsubscriptionForwarded==true)&&swatch.getTime()>1300) {
-						JSONObject jsonObject = new JSONObject();
-						System.out.println("hits from local servers"+Subscrible.matchList.size()+"total hits from other servers"+relayHitCounter);
-						jsonObject.put("resultSize", Subscrible.matchList.size()+relayHitCounter);
-						out.writeUTF(jsonObject.toJSONString());		
-						out.flush();//which out?
-						Thread.currentThread().yield();
-						break;
-					}
-//					}
-				} catch (Exception e) {
-					
-				}
-			}*/
 			
 		
 		}
@@ -437,7 +318,7 @@ public class Subscrible {
 			public void run() {
 			checkUpdated(id, name, tags, description, uri, channel, owner, relay, socket, hostName);
 			if (relay==true) {
-				checkUpdatedServer(input,id,sub,unsubscribe);
+				//checkUpdatedServer(input,id,sub,unsubscribe);
 			}
 			
 			}
@@ -514,7 +395,7 @@ public class Subscrible {
 					if(!InetAddress.getLocalHost().getHostAddress().equals(tempIP)){
 							
 						WaitSubRelay2 relay2 = new WaitSubRelay2(input, tempIP, tempPort, out, id, sub,in,isSecurePort,hasDebugOption,unsubscribe);
-						relay2.run();
+						new Thread(relay2).start();
 					}
 				} catch (Exception e) {
 					e.printStackTrace();

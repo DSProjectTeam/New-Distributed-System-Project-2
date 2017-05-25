@@ -60,7 +60,7 @@ public class WaitSubRelay2 implements Runnable{
 			try {
 				//set server socket to connect to secure server
 				if(isSecurePort){
-					System.setProperty("java.net.ssl.trustStore", "sslResource/keystore.jks");
+					System.setProperty("javax.net.ssl.keyStore","sslconnection/clientKeystore.jks");
 					SSLSocketFactory sslSocketFactory = (SSLSocketFactory)SSLSocketFactory.getDefault();
 					SSLSocket sslSocket = (SSLSocket) sslSocketFactory.createSocket(host, port);
 					
