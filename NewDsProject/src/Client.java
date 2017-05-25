@@ -42,7 +42,7 @@ import com.google.gson.JsonParser;
  */
 public class Client {
 	//for convenience, ip address is also shown as "host" here.
-	public static String host = "sunrise.cis.unimelb.edu.au";
+	public static String host = "localhost";
 	public static String host2 = "192.168.1.110";
 //	public static String host = "10.12.187.20";
 	public static int port = 3781;
@@ -73,7 +73,9 @@ public class Client {
 			if(hasSecureOption){
 				//Location of the Java keystore file containing the collection of 
 				//certificates trusted by this application (trust store).
-				System.setProperty("javax.net.ssl.trustStore", "sslResource/keystore.jks");
+				System.setProperty("javax.net.ssl.trustStore", "sslconnection/clientKeystore.jks");
+				System.setProperty("javax.net.ssl.keyStore", "sslconnection/clientKeystore.jks");
+				System.setProperty("javax.net.ssl.keyStorePassword", "12345678");
 				//Create SSL socket and connect it to the remote server 
 				SSLSocketFactory sslsocketfactory = (SSLSocketFactory) SSLSocketFactory.getDefault();
 				sslsocket = (SSLSocket) sslsocketfactory.createSocket(host, sport);
@@ -92,7 +94,7 @@ public class Client {
 			out.flush();
 			
 			//print part of debug information.
-//			System.out.println("command sent to server: "+userInput.toJSONString());
+			System.out.println("command sent to server: "+userInput.toJSONString());
 			if(hasDebugOption){
 			    System.out.println("-setting debug on");
 			    System.out.println(commandType+" to "+host+":"+port);
@@ -440,9 +442,9 @@ public class Client {
 			JSONParser parser = new JSONParser();
 			JSONObject serverResponse;		
 			serverResponse = (JSONObject)parser.parse(input);
-			if(hasDebugOption){
+			//if(hasDebugOption){
 		       System.out.println("RECEIVED: "+serverResponse.toJSONString());
-			}
+			//}
 			
 			//print response in GSON format. 
 			JsonParser jsonParser = new JsonParser();
