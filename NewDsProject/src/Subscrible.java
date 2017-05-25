@@ -289,11 +289,12 @@ public class Subscrible {
 
 									
 									JSONObject jsonObject = new JSONObject();
-									System.out.println("hits from local servers"+Subscrible.matchList.size()+"total hits from other servers"+relayHitCounter);
+									System.out.println("hits from local servers: "+Subscrible.matchList.size()+" total hits from other servers: "+relayHitCounter);
 									
 									jsonObject.put("resultSize", Subscrible.matchList.size()+relayHitCounter);
-									out.writeUTF(jsonObject.toJSONString());		
-									out.flush();
+									Subscrible.sendMessage(jsonObject);
+//									out.writeUTF(jsonObject.toJSONString());		
+//									out.flush();
 									Thread.yield();
 									break;
 //								}
