@@ -14,11 +14,13 @@ public class IsSubscribe implements Callable<Boolean>{
 	String id;
 	boolean isUnsubscribe = false;
 	boolean hasDebugOption;
+	boolean isSecurePort;
 	
-	public IsSubscribe(DataInputStream in,String id,boolean hasDebugOption) {
+	public IsSubscribe(DataInputStream in,String id,boolean hasDebugOption, boolean isSecurePort) {
 		this.in = in;
 		this.id = id;
 		this.hasDebugOption = hasDebugOption;
+		this.isSecurePort = isSecurePort;
 	}
 	
 	
@@ -28,18 +30,37 @@ public class IsSubscribe implements Callable<Boolean>{
 		Thread.currentThread().setPriority(Thread.MAX_PRIORITY);
 		try {
 			while(true){
-				if (in.available()>0) {
-					JSONParser parser = new JSONParser();
-					JSONObject message = (JSONObject) parser.parse(in.readUTF());
-					if (message.get("command").toString().equals("UNSUBSCRIBE")&&
-							message.get("id").toString().equals(id)) {
-						if(hasDebugOption){
-						       System.out.println("RECEIVED: "+message.toJSONString());
-							}
-						isUnsubscribe = true;
-						break;
+				if(!isSecurePort){
+					if (in.available()>0) {
+						JSONParser parser = new JSONParser();
+						JSONObject message = (JSONObject) parser.parse(in.readUTF());
+						if (message.get("command").toString().equals("UNSUBSCRIBE")&&
+								message.get("id").toString().equals(id)) {
+							if(hasDebugOption){
+							       System.out.println("RECEIVED: "+message.toJSONString());
+								}
+							isUnsubscribe = true;
+							break;
+						}
+					}
+				}else{
+					try{
+						JSONParser parser = new JSONParser();
+						JSONObject message = (JSONObject) parser.parse(in.readUTF());
+						if (message.get("command").toString().equals("UNSUBSCRIBE")&&
+								message.get("id").toString().equals(id)) {
+							if(hasDebugOption){
+							       System.out.println("RECEIVED: "+message.toJSONString());
+								}
+							isUnsubscribe = true;
+							break;
+						}
+					}
+					catch(SocketTimeoutException e){
+						//should NOT be any break here.
 					}
 				}
+				
 				//这里暂时把下面批注了。 不然会报错，这部分应该比较好修复
 				/*try{
 					JSONParser parser = new JSONParser();
