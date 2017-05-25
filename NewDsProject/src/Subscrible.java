@@ -186,7 +186,7 @@ public class Subscrible {
 		}else{
 			//relay is true, not in a loop
 			
-			while(isUnsubscribe==false){System.out.println("1");
+				System.out.println("1");
 				QueryReturn queryReturn= ServerHandler.handlingSubscribe(id, name, tags, description, uri, channel, owner, relay, resources, socket, hostName);System.out.println("1.1");System.out.println("1.1");
 				Subscrible Subscrible = new Subscrible(resources,serverList,in,out,hasDebugOption);System.out.println("1.2");
 				
@@ -196,7 +196,7 @@ public class Subscrible {
 					//invalid template
 					if (queryReturn.reponseMessage.get("response").toString().equals("error")) {
 						Subscrible.sendMessage(queryReturn.reponseMessage);
-						break;
+//						break;
 					}else{
 						//valid template, but no match currently, pending
 						if (queryReturn.reponseMessage.get("response").toString().equals("pending")) {
@@ -267,36 +267,41 @@ public class Subscrible {
 //					}
 //				}
 				
-				try{System.out.println(unsubscribe.isDone());
-					isUnsubscribe = unsubscribe.get();System.out.println(unsubscribe.isDone());System.out.println("7");
-					if (isUnsubscribe) {System.out.println("8");
-						
-						StopWatch watch = new StopWatch();
-						watch.start();
-						
-						/*这里让下面的代码暂停0.5秒再执行，以免WaitRelay2中对relayHitCounter的操作还没更新
-						 * 而下面代码已经将relayHitCounter发送走了。
-						 * */
-						if (watch.getTime()>500) {
-							watch.stop();
-							//remove the {"id":xxx} or {"resposne":"success"}
-							Subscrible.matchList.remove(0);
+				while(true){
+					if(unsubscribe.isDone()){
+						try{
+							isUnsubscribe = unsubscribe.get();System.out.println(unsubscribe.isDone());System.out.println("7");
+							if (isUnsubscribe) {System.out.println("8");
+								
+//								StopWatch watch = new StopWatch();
+//								watch.start();
+								
+								/*这里让下面的代码暂停0.5秒再执行，以免WaitRelay2中对relayHitCounter的操作还没更新
+								 * 而下面代码已经将relayHitCounter发送走了。
+								 * */
+//								if (watch.getTime()>500) {
+//									watch.stop();
+									//remove the {"id":xxx} or {"resposne":"success"}
 							
-							JSONObject jsonObject = new JSONObject();
-							System.out.println("hits from local servers"+Subscrible.matchList.size()+"total hits from other servers"+relayHitCounter);
-							
-							jsonObject.put("resultSize", Subscrible.matchList.size()+relayHitCounter);
-							out.writeUTF(jsonObject.toJSONString());		
-							out.flush();
-							Thread.yield();
-							break;
+									if(!Subscrible.matchList.isEmpty()){
+										Subscrible.matchList.remove(0);
+									}
+
+									
+									JSONObject jsonObject = new JSONObject();
+									System.out.println("hits from local servers"+Subscrible.matchList.size()+"total hits from other servers"+relayHitCounter);
+									
+									jsonObject.put("resultSize", Subscrible.matchList.size()+relayHitCounter);
+									out.writeUTF(jsonObject.toJSONString());		
+									out.flush();
+									Thread.yield();
+									break;
+//								}
+								
+							}
+						}catch(Exception e){
 						}
-						System.out.println("9");
-						
-						
 					}
-				} catch (Exception e) {
-					
 				}
 				System.out.println("10");
 				//below begin to forward the subscription to other servers.
@@ -401,7 +406,7 @@ public class Subscrible {
 				}
 			}*/
 			
-		}
+		
 		}
 		
 		
