@@ -68,7 +68,7 @@ public class Subscrible {
 	
 	
 	public synchronized static void handlingSubscribleTest(JSONObject input,DataInputStream in,DataOutputStream out,
-			ServerSocket socket,HashMap<String, Resource> resources,String hostName, boolean hasDebugOption, ArrayList<String> serverList,
+			String socket,HashMap<String, Resource> resources,String hostName, boolean hasDebugOption, ArrayList<String> serverList,
 			boolean isSecurePort){
 		JSONObject template_resource_sub = (JSONObject)input.get("resourceTemplate");
 		JSONArray debugMsg_sub = new JSONArray();
@@ -311,7 +311,7 @@ public class Subscrible {
 	 * monitor the status of the resources hashmap, if has changed and match resource template. write output.
 	 * */
 	public void checkUpdates(String id, String name,String[] tags,String description,String uri,String channel,String owner,
-			boolean relay,ServerSocket socket,String hostName,JSONObject input,Subscrible sub,Future<Boolean> unsubscribe){
+			boolean relay,String socket,String hostName,JSONObject input,Subscrible sub,Future<Boolean> unsubscribe){
 			new Timer().schedule(new TimerTask() {
 			
 			@Override
@@ -326,7 +326,7 @@ public class Subscrible {
 	}
 	
 	private boolean checkUpdated(String id, String name,String[] tags,String description,String uri,String channel,String owner,
-			boolean relay,ServerSocket socket,String hostName) {
+			boolean relay,String socket,String hostName) {
 	   
 		if(!this.resources.equals(this.lastState)){
 			System.out.println("updated");

@@ -284,13 +284,15 @@ public class EZshareServer {
 							System.out.println("violate interval limit");
 							temp = threadTime;
 						}else {
-							ServerThread thread = new ServerThread(client, eZshareServer.resources, eZshareServer.secret, eZshareServer.server,
+							String hostAndPort = eZshareServer.server.getInetAddress().getHostAddress() + ":" + eZshareServer.server.getLocalPort();
+							ServerThread thread = new ServerThread(client, eZshareServer.resources, eZshareServer.secret, hostAndPort,
 									eZshareServer.serverList, eZshareServer.hasDebugOption, connectionintervallimit,hostName,eZshareServer.isSecure);
 							thread.start();
 							temp = threadTime;
 						}
 					}else{
-						ServerThread thread = new ServerThread(client, eZshareServer.resources, eZshareServer.secret, eZshareServer.server,
+						String hostAndPort = eZshareServer.server.getInetAddress().getHostAddress() + ":" + eZshareServer.server.getLocalPort();
+						ServerThread thread = new ServerThread(client, eZshareServer.resources, eZshareServer.secret, hostAndPort,
 								eZshareServer.serverList, eZshareServer.hasDebugOption, connectionintervallimit,hostName,eZshareServer.isSecure);
 						thread.start();
 						temp = threadTime;
