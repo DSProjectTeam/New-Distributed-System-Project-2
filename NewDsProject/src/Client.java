@@ -76,6 +76,7 @@ public class Client {
 				System.setProperty("javax.net.ssl.trustStore", "sslconnection/clientKeystore.jks");
 				System.setProperty("javax.net.ssl.keyStore", "sslconnection/clientKeystore.jks");
 				System.setProperty("javax.net.ssl.keyStorePassword", "12345678");
+				//System.setProperty("javax.net.debug","all");
 				//Create SSL socket and connect it to the remote server 
 				SSLSocketFactory sslsocketfactory = (SSLSocketFactory) SSLSocketFactory.getDefault();
 				sslsocket = (SSLSocket) sslsocketfactory.createSocket(host, sport);
@@ -138,10 +139,10 @@ public class Client {
 									handleServerResponse(userInput, responseMessage, in);
 								}
 								catch(SocketTimeoutException e){
-									break;
+									//break;
 								}
 							}
-							if(swatch.getTime()>1300){
+							if(swatch.getTime()>1800){
 								break;
 							}
 						}
@@ -181,7 +182,7 @@ public class Client {
 					else{
 						try{
 							String responseMessage = in.readUTF();
-							handleServerResponse(userInput, responseMessage, in);
+							handleServerResponse(userInput, responseMessage, in);							
 						}
 						catch(SocketTimeoutException e){
 							break;

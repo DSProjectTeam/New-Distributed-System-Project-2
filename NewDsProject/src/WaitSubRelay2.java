@@ -119,6 +119,7 @@ public class WaitSubRelay2 implements Runnable{
 						
 						
 					}*/
+					//System.out.println(isSecurePort+ "  !");
 					JSONParser parser = new JSONParser();
 					//if secure connection,  in.avaliable is not working, try to catch socketTimeout exception to 
 					//replace it with the similar function.
@@ -130,11 +131,16 @@ public class WaitSubRelay2 implements Runnable{
 								clientOutput.flush();
 							}else{
 								hitCount = Integer.parseInt(message.get("resultSize").toString());
-								int temp = sub.relayHitCounter;
+								/*int temp = sub.relayHitCounter;
 								temp = temp+ hitCount;
-								sub.relayHitCounter = temp;
-								//relayHitCounter = relayHitCounter+hitCount;
-								System.out.println(message.toJSONString()+"  "+sub.relayHitCounter+"  "+temp);
+								sub.relayHitCounter = temp;*/
+								sub.relayHitCounter = sub.relayHitCounter+hitCount;
+								//System.out.println(message.toJSONString()+"  "+sub.relayHitCounter+"  "+temp);
+								System.out.println(message.toJSONString()+"  "+sub.relayHitCounter+"  ");
+								//Thread.currentThread().notify();
+								
+								Thread.yield();
+								break;
 							}
 						}catch(SocketTimeoutException e){
 							//should NOT be any "break" here!, the while(true) loop will continue.
@@ -154,7 +160,11 @@ public class WaitSubRelay2 implements Runnable{
 								temp = temp+ hitCount;
 								sub.relayHitCounter = temp;
 								//relayHitCounter = relayHitCounter+hitCount;
-								System.out.println(message.toJSONString()+"  "+sub.relayHitCounter+"  "+temp);
+								System.out.println(message.toJSONString()+"  "+sub.relayHitCounter+"  ");
+								sub.isReceiveOther = 1;
+								//Thread.currentThread().notifyAll();
+								
+								Thread.yield();
 								break;
 							}
 						}
@@ -163,8 +173,6 @@ public class WaitSubRelay2 implements Runnable{
 					//input = 0 go back to the while(ture) loop
 				}
 				
-				
-				Thread.yield();
 			
 				
 			

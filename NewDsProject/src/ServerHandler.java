@@ -336,7 +336,7 @@ public class ServerHandler {
 	public synchronized static QueryReturn handlingQuery(String name_query,String[] tags_query,
 			String description_query, String uri_query,String channel_query, 
 			String owner_query, boolean relay,HashMap<String, Resource> resources, String ezserver,String hostName){
-		/**鐢ㄦ潵瀛樻斁婊¤冻template鐨剅esource*/
+		/**閻€劍娼电�涙ɑ鏂佸陇鍐籺emplate閻ㄥ墔esource*/
 		ArrayList<Resource> matchResourceSet = new ArrayList<Resource>();
 		String errorMessage;
 		String response;
@@ -376,7 +376,7 @@ public class ServerHandler {
 				queryReturn = new QueryReturn(serverResponse);
 			}else{
 				
-						//**tagIncluded等于true如果所有template标签包含在候选资源的tags中*//*
+						//**tagIncluded绛変簬true濡傛灉鎵�鏈塼emplate鏍囩鍖呭惈鍦ㄥ�欓�夎祫婧愮殑tags涓�*//*
 						
 					
 					/** for query like -query with no parameter*/
@@ -571,7 +571,7 @@ public class ServerHandler {
 	public synchronized static QueryReturn handlingSubscribe(String id, String name_query,String[] tags_query,
 			String description_query, String uri_query,String channel_query, 
 			String owner_query, boolean relay,HashMap<String, Resource> resources, String ezserver,String hostName){
-		/**鐢ㄦ潵瀛樻斁婊¤冻template鐨剅esource*/
+		/**閻€劍娼电�涙ɑ鏂佸陇鍐籺emplate閻ㄥ墔esource*/
 		ArrayList<Resource> matchResourceSet = new ArrayList<Resource>();
 		String errorMessage;
 		String response;
@@ -610,7 +610,7 @@ public class ServerHandler {
 				queryReturn = new QueryReturn(serverResponse);
 			}else{
 				
-						//**tagIncluded等于true如果所有template标签包含在候选资源的tags中*//*
+						//**tagIncluded绛変簬true濡傛灉鎵�鏈塼emplate鏍囩鍖呭惈鍦ㄥ�欓�夎祫婧愮殑tags涓�*//*
 						
 					
 					/** for query like -query with no parameter*/
@@ -863,7 +863,7 @@ public class ServerHandler {
 			
 			//inputQuerry.put("channel", "");
 			/*inputQuerry.put("owner", "");*/
-			inputQuerry.put("relay", "false");
+			inputQuerry.put("relay", false);
 					
 			/**a list to store success information from other servers*/
 			ArrayList<JSONObject> successOutcome = new ArrayList<>();
