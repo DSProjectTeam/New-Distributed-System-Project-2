@@ -7,9 +7,10 @@ EZshareServer command line options:
 -advertisedhostname <arg>        advertised hostname
 -connectionintervallimit <arg>   connection interval limit in seconds
 -exchangeinterval <arg>          exchange interval in seconds
--port <arg> 					 server port, an integer
+-port <arg> 					 insecure server port, an integer
 -secret <arg> 					 secret
 -debug 							 print debug information
+-sport <arg>					 secure server port, an integer
 
 Client command line options:
 -channel <arg> 					 channel
@@ -29,4 +30,8 @@ Client command line options:
 -share 							 share resource on server
 -tags <arg> 					 resource tags, tag1,tag2,tag3,...
 -uri <arg> 						 resource URI
+-subscribe						 subscribe to a server with specified template to receive asynchronous responses
+-secure							 connect to server through secure connection
+-relay <arg>					 make query/subscription requests to other known servers
+-id <arg>						 id of the subscriber
 
