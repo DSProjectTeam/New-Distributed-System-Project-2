@@ -60,23 +60,7 @@ public class IsSubscribe implements Callable<Boolean>{
 						//should NOT be any break here.
 					}
 				}
-				
-				//这里暂时把下面批注了。 不然会报错，这部分应该比较好修复
-				/*try{
-					JSONParser parser = new JSONParser();
-					JSONObject message = (JSONObject) parser.parse(in.readUTF());
-					if (message.get("command").toString().equals("UNSUBSCRIBE")&&
-							message.get("id").toString().equals(id)) {
-						if(hasDebugOption){
-						       System.out.println("RECEIVED: "+message.toJSONString());
-							}
-						isUnsubscribe = true;
-						break;
-					}
-				}
-				catch(SocketTimeoutException e){
-					//should NOT be any break here.
-				}*/
+
 			}
 		} catch (Exception e) {
 			//e.printStackTrace();

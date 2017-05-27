@@ -13,6 +13,7 @@ import org.apache.commons.lang3.time.StopWatch;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 
+/**this class is used to monitor if received unsubscribe command */
 public class WaitSubRelay2 implements Runnable{
 
 	String id;
@@ -50,7 +51,7 @@ public class WaitSubRelay2 implements Runnable{
 	public void run() {
 		Thread.currentThread().setPriority(Thread.MAX_PRIORITY);
 		
-		//这里也使用IsSubscribe来监听unsubscribe
+		//here we also use IsSubscribe to listen to unsubscribe
 		/*ExecutorService executorService = Executors.newFixedThreadPool(1);
 		Future<Boolean> unsubscribe = executorService.submit(new IsSubscribe(clientInput, id,hasDebugOption));*/
 		
@@ -87,12 +88,13 @@ public class WaitSubRelay2 implements Runnable{
 				
 				StopWatch swatch = new StopWatch();
 				
-				
-				/*给其他服务器发unsubscribe命令后， 取出resultSize， 
-				 * 否则只是正常的将从其他服务器接收到的资源传送给client*/
+				/*after sent unsubscribe comamnd to other servers, extract resultSize.
+				Otherwise, just forward the resources received from other servers to the client as normal.
+				*/
+
 				while(true){
 					if(unsubscribe.isDone()){
-						//监听unsubscribe命令
+						//listen to unsubscribe command
 						//isUnsubscribe = unsubscribe.get();
 						//if (isUnsubscribe==true) {
 							JSONObject UnsubJSONObject = new JSONObject();
@@ -136,7 +138,7 @@ public class WaitSubRelay2 implements Runnable{
 								sub.relayHitCounter = temp;*/
 								sub.relayHitCounter = sub.relayHitCounter+hitCount;
 								//System.out.println(message.toJSONString()+"  "+sub.relayHitCounter+"  "+temp);
-								System.out.println(message.toJSONString()+"  "+sub.relayHitCounter+"  ");
+//								System.out.println(message.toJSONString()+"  "+sub.relayHitCounter+"  ");
 								//Thread.currentThread().notify();
 								
 								Thread.yield();
@@ -150,7 +152,7 @@ public class WaitSubRelay2 implements Runnable{
 						if (in.available()>0) {
 							
 							JSONObject message = (JSONObject) parser.parse(in.readUTF());
-							System.out.println(message.toJSONString()+"wawawawawa!");
+//							System.out.println(message.toJSONString()+"wawawawawa!");
 							if(!message.containsKey("resultSize")){
 								clientOutput.writeUTF(message.toJSONString());
 								clientOutput.flush();
@@ -160,7 +162,7 @@ public class WaitSubRelay2 implements Runnable{
 								temp = temp+ hitCount;
 								sub.relayHitCounter = temp;
 								//relayHitCounter = relayHitCounter+hitCount;
-								System.out.println(message.toJSONString()+"  "+sub.relayHitCounter+"  ");
+//								System.out.println(message.toJSONString()+"  "+sub.relayHitCounter+"  ");
 								sub.isReceiveOther = 1;
 								//Thread.currentThread().notifyAll();
 								
