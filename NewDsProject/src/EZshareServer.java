@@ -125,18 +125,21 @@ public class EZshareServer {
 	    
 	    if (cmd.hasOption("secret")) {
 			secret = cmd.getOptionValue("secret");
+			System.out.println("using secret: "+secret);
 		}else{
 			//random string as  default secret
 			Random random = new Random();
 			secret = RandomStringUtils.randomAlphabetic(20);
-			System.out.println("random secret as default: "+secret);
+			System.out.println("using random secret: "+secret);
 		}
 	    
 	    if(cmd.hasOption("advertisedhostname")){
 	    	hostName = cmd.getOptionValue("advertisedhostname");
+	    	System.out.println("using advertised hostname: "+hostName);
 	    }else{
 	    	try {
 				hostName = InetAddress.getLocalHost().getHostAddress();
+				System.out.println("using hostname: "+hostName);
 			} catch (UnknownHostException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -145,6 +148,7 @@ public class EZshareServer {
 	    
 	    if(cmd.hasOption("port")){
 	    	port =Integer.parseInt(cmd.getOptionValue("port"));
+	    	System.out.println("bound to port "+port);
 	    }
 	    
 	    if(cmd.hasOption("connectionintervallimit")){
@@ -157,6 +161,7 @@ public class EZshareServer {
 	    //secure port option
 	    if(cmd.hasOption("sport")){
 	    	sport = Integer.parseInt(cmd.getOptionValue("sport"));
+	    	System.out.println("bound to port "+sport);
 	    	isSecurePort = true;
 	    }
 	    
@@ -167,10 +172,9 @@ public class EZshareServer {
 	 * @param args
 	 */
 	public static void main(String[] args){
-		System.out.println("Welcome to the EZShare");
+		System.out.println("Starting the EZShare Server");
 		handleServerInput(args);
 		initializeServer();
-		
 		/*initializeServer(3780);*/
 	}
 	
@@ -222,6 +226,8 @@ public class EZshareServer {
 					Timer timer = new Timer();		
 					timer.schedule(new ExchangeTask(eZshareServer,hasDebugOption), exchangeInterval,exchangeInterval);
 					
+					System.out.println("started");
+					
 					int count = 0;
 					long temp=0;
 					while(true){
@@ -268,6 +274,8 @@ public class EZshareServer {
 				/**every 10 mins(by default), contact a randomly selected server in the server list*/
 				Timer timer = new Timer();		
 				timer.schedule(new ExchangeTask(eZshareServer,hasDebugOption), exchangeInterval,exchangeInterval);
+				
+				System.out.println("started");
 				
 				int count = 0;
 				long temp=0;

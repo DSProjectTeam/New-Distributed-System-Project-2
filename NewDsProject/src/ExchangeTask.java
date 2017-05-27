@@ -80,7 +80,7 @@ public class ExchangeTask extends TimerTask{
 						if(hasDebugOption){
 							System.out.println("SENT: "+exchangeOutput.toJSONString());
 						}
-						System.out.println("command sent to insecure server: "+exchangeOutput.toJSONString());
+//						System.out.println("command sent to insecure server: "+exchangeOutput.toJSONString());
 		    	   }
 		    	    
 					/*it's not specified in the instruction if we should handle the exchange messages 
@@ -173,7 +173,7 @@ public class ExchangeTask extends TimerTask{
 							if(hasDebugOption){
 								System.out.println("SENT: "+secureExchangeOutput.toJSONString());
 							}
-							System.out.println("command sent to secure server: "+secureExchangeOutput.toJSONString());
+//							System.out.println("command sent to secure server: "+secureExchangeOutput.toJSONString());
 			    	   }
 			       }catch (ConnectException e) {
 					secureServerList.remove(randomIndexSecure);

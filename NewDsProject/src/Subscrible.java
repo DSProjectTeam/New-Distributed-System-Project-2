@@ -106,7 +106,6 @@ public class Subscrible {
 
 		// loop until receive unsubscribe message
 		if (relay == false) {
-			// System.out.println("1");
 			if (isUnsubscribe == false) {
 
 				QueryReturn queryReturn = ServerHandler.handlingSubscribe(id, name, tags, description, uri, channel,
@@ -117,7 +116,6 @@ public class Subscrible {
 				// pending.
 				Subscrible subscrible = new Subscrible(resources, in, out, hasDebugOption, isSecure);
 				if (queryReturn.hasMatch == false) {
-					// System.out.println("2");
 					// invalid template
 					if (queryReturn.reponseMessage.get("response").toString().equals("error")) {
 						subscrible.sendMessage(queryReturn.reponseMessage);
@@ -134,6 +132,10 @@ public class Subscrible {
 						}
 					}
 				} else {
+					JSONObject jsonObject2 = new JSONObject();
+					jsonObject2.put("response", "success");
+					jsonObject2.put("id", id);
+					subscrible.sendMessage(jsonObject2);
 					// valid template, has match, monitor resources update.
 					for (JSONObject jsonObject : queryReturn.returnList) {
 
@@ -144,7 +146,6 @@ public class Subscrible {
 					}
 
 					/*
-					 * System.out.println("3"); for(JSONObject jsonObject:
 					 * queryReturn.returnList){ try {
 					 * out.writeUTF(jsonObject.toJSONString());
 					 * 
@@ -158,15 +159,12 @@ public class Subscrible {
 							input, subscrible, unsubscribe);
 
 				}
-
-				System.out.println("asfasf");
+				
 				// if unsubscribe, break the loop, return result size
 				while (true) {
 					if (unsubscribe.isDone()) {
 						try {
-							System.out.println(unsubscribe.isDone());
 							isUnsubscribe = unsubscribe.get();
-							System.out.println(unsubscribe.isDone());
 							if (isUnsubscribe) {
 								JSONObject jsonObject = new JSONObject();
 								/*
@@ -199,17 +197,13 @@ public class Subscrible {
 		} else {
 			// relay is true, not in a loop
 
-			System.out.println("1");
+
 			QueryReturn queryReturn = ServerHandler.handlingSubscribe(id, name, tags, description, uri, channel, owner,
 					relay, resources, socket, hostName);
-			System.out.println("1.1");
-			System.out.println("1.1");
 			Subscrible Subscrible = new Subscrible(resources, serverList, in, out, hasDebugOption, isSecure);
-			System.out.println("1.2");
 
 			// invalid template or valid template but no current match, pending.
 			if (queryReturn.hasMatch == false) {
-				System.out.println("2");
 
 				// invalid template
 				if (queryReturn.reponseMessage.get("response").toString().equals("error")) {
@@ -218,15 +212,21 @@ public class Subscrible {
 				} else {
 					// valid template, but no match currently, pending
 					if (queryReturn.reponseMessage.get("response").toString().equals("pending")) {
+						JSONObject jsonObject = new JSONObject();
+						jsonObject.put("response", "success");
+						jsonObject.put("id", id);
+						Subscrible.sendMessage(jsonObject);
 						Subscrible.checkUpdates(id, name, tags, description, uri, channel, owner, relay, socket,
 								hostName, input, Subscrible, unsubscribe);
-						System.out.println("pending!!");
+//						System.out.println("pending!!");
 					}
 				}
 			} else {
-				System.out.println("3");
+				JSONObject jsonObject2 = new JSONObject();
+				jsonObject2.put("response", "success");
+				jsonObject2.put("id", id);
+				Subscrible.sendMessage(jsonObject2);
 				// valid template, has match, monitor resources update.
-
 				for (JSONObject jsonObject : queryReturn.returnList) {
 					/*
 					 * try { out.writeUTF(jsonObject.toJSONString());
@@ -244,7 +244,6 @@ public class Subscrible {
 			}
 			HashMap<String, Future<Boolean>> finishMap = new HashMap<>();
 			if (!serverList.isEmpty()) {
-				System.out.println("4");
 				// change relay field to false.
 				input.put("relay", false);
 				ExecutorService executorServiceForward = Executors.newFixedThreadPool(serverList.size());
@@ -255,8 +254,6 @@ public class Subscrible {
 
 					try {
 						if (!InetAddress.getLocalHost().getHostAddress().equals(tempIP)) {
-							System.out.println("去监听了");
-
 							/*
 							 * //WaitSubRelay2 现在自己可以监听client端的unsubscribe命令。
 							 * WaitSubRelay2 relay2 = new WaitSubRelay2(input,
@@ -285,10 +282,7 @@ public class Subscrible {
 				if (unsubscribe.isDone()) {
 					try {
 						isUnsubscribe = unsubscribe.get();
-						// System.out.println(unsubscribe.isDone());
-						// System.out.println("7");
 						if (isUnsubscribe) {
-							// System.out.println("8");
 							//StopWatch omega = new StopWatch();
 							// Thread.currentThread().wait();
 
@@ -304,24 +298,21 @@ public class Subscrible {
 							//System.out.println(counter+ "   "+size);
 							if(counter == size) {
 								JSONObject jsonObject = new JSONObject();
-								System.out.println("hits from local servers " + Subscrible.matchList.size()
-										+ " total hits from other servers" + relayHitCounter + " ");
+//								System.out.println("hits from local servers " + Subscrible.matchList.size()
+//										+ " total hits from other servers " + relayHitCounter + " ");
 								Thread.currentThread().wait(500);
-								try {
+//								try {
 									jsonObject.put("resultSize", Subscrible.matchList.size() + relayHitCounter);
-									out.writeUTF(jsonObject.toJSONString());
-									out.flush();
-									System.out.println("666666666");
+									Subscrible.sendMessage(jsonObject);
+//									out.writeUTF(jsonObject.toJSONString());
+//									out.flush();
 									temp = true;
-								} catch (SocketException e) {
-									e.printStackTrace();
-								}
+//								} catch (SocketException e) {
+//									e.printStackTrace();
+//								}
 
-								
-								
 								Thread.currentThread().yield();
 								break;
-
 							}
 							
 
@@ -375,7 +366,7 @@ public class Subscrible {
 			String owner, boolean relay, String socket, String hostName) {
 
 		if (!this.resources.equals(this.lastState)) {
-			System.out.println("updated");
+//			System.out.println("updated");
 			QueryReturn temp = ServerHandler.handlingSubscribe(id, name, tags, description, uri, channel, owner, relay,
 					this.resources, socket, hostName);
 			if (temp.hasMatch == true) {
@@ -427,12 +418,12 @@ public class Subscrible {
 	private boolean checkUpdatedServer(JSONObject input, String id, Subscrible sub, Future<Boolean> unsubscribe) {
 		// newServers.clear();
 		if (this.serverList.size() != this.lastStateServerList.size()) {
-			System.out.println("serverList updated");
+//			System.out.println("serverList updated");
 			// this.serverListUpdated = false;
 		}
 		for (String server : this.serverList) {
 			if (!this.lastStateServerList.contains(server)) {
-				System.out.println("serverList updated");
+//				System.out.println("serverList updated");
 				input.put("relay", false);
 				ExecutorService executorServiceForward = Executors.newFixedThreadPool(1);
 
@@ -442,7 +433,7 @@ public class Subscrible {
 
 				try {
 					if (!InetAddress.getLocalHost().getHostAddress().equals(tempIP)) {
-						System.out.println("is secure? " + sub.isSecurePort);
+//						System.out.println("is secure? " + sub.isSecurePort);
 						WaitSubRelay2 relay2 = new WaitSubRelay2(input, tempIP, tempPort, out, id, sub, in,
 								sub.isSecurePort, hasDebugOption, unsubscribe);
 						new Thread(relay2).start();

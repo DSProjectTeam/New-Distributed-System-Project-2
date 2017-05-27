@@ -645,7 +645,7 @@ public class ServerThread extends Thread{
 								byte[] sendingBuffer = new byte[1024*1024];
 								int num;
 								while((num = byteFile.read(sendingBuffer))>0){
-									System.out.println(num);
+//									System.out.println(num);
 									output.write(Arrays.copyOf(sendingBuffer, num));
 								}
 								byteFile.close();

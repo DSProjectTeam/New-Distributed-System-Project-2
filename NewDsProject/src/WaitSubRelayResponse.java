@@ -56,8 +56,7 @@ public class WaitSubRelayResponse implements Callable<Boolean>{
 	@Override
 	public Boolean call() {
         Thread.currentThread().setPriority(Thread.MAX_PRIORITY);
-		
-		//杩欓噷涔熶娇鐢↖sSubscribe鏉ョ洃鍚瑄nsubscribe
+
 		/*ExecutorService executorService = Executors.newFixedThreadPool(1);
 		Future<Boolean> unsubscribe = executorService.submit(new IsSubscribe(clientInput, id,hasDebugOption));*/
 		
@@ -95,19 +94,16 @@ public class WaitSubRelayResponse implements Callable<Boolean>{
 				StopWatch swatch = new StopWatch();
 				
 				
-				/*缁欏叾浠栨湇鍔″櫒鍙憉nsubscribe鍛戒护鍚庯紝 鍙栧嚭resultSize锛� 
-				 * 鍚﹀垯鍙槸姝ｅ父鐨勫皢浠庡叾浠栨湇鍔″櫒鎺ユ敹鍒扮殑璧勬簮浼犻�佺粰client*/
+
 				while(true){
 					if(unsubscribe.isDone()){
-						//鐩戝惉unsubscribe鍛戒护
+
 						//isUnsubscribe = unsubscribe.get();
 						//if (isUnsubscribe==true) {
 							JSONObject UnsubJSONObject = new JSONObject();
 							UnsubJSONObject.put("command", "UNSUBSCRIBE");
 							UnsubJSONObject.put("id", id);
 							out.writeUTF(UnsubJSONObject.toJSONString());
-							//System.out.println("666666666");
-							
 						//}
 					}
 					//input > 0
@@ -143,7 +139,7 @@ public class WaitSubRelayResponse implements Callable<Boolean>{
 								sub.relayHitCounter = temp;*/
 								sub.relayHitCounter = sub.relayHitCounter+hitCount;
 								//System.out.println(message.toJSONString()+"  "+sub.relayHitCounter+"  "+temp);
-								System.out.println(message.toJSONString()+"  "+sub.relayHitCounter+"  ");
+//								System.out.println(message.toJSONString()+"  "+sub.relayHitCounter+"  ");
 								//Thread.currentThread().notify();
 								
 								isFinish = true;
@@ -157,7 +153,7 @@ public class WaitSubRelayResponse implements Callable<Boolean>{
 						if (in.available()>0) {
 							
 							JSONObject message = (JSONObject) parser.parse(in.readUTF());
-							System.out.println(message.toJSONString()+"wawawawawa!");
+//							System.out.println(message.toJSONString()+"wawawawawa!");
 							if(!message.containsKey("resultSize")){
 								clientOutput.writeUTF(message.toJSONString());
 								clientOutput.flush();
@@ -167,7 +163,7 @@ public class WaitSubRelayResponse implements Callable<Boolean>{
 								temp = temp+ hitCount;
 								sub.relayHitCounter = temp;
 								//relayHitCounter = relayHitCounter+hitCount;
-								System.out.println(message.toJSONString()+"  "+sub.relayHitCounter+"  ");
+//								System.out.println(message.toJSONString()+"  "+sub.relayHitCounter+"  ");
 								sub.isReceiveOther = 1;
 								//Thread.currentThread().notifyAll();
 								

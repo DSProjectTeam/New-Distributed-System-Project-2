@@ -254,7 +254,7 @@ public class ServerHandler {
 
 			}else{
 				if(!ClientSecret.equals(ServerSecret)){
-					System.out.println(ClientSecret+" "+ServerSecret);
+//					System.out.println(ClientSecret+" "+ServerSecret);
 					/** secret was incorrect*/
 					response = "error";
 					errorMessage = "incorrect secret";
@@ -480,7 +480,7 @@ public class ServerHandler {
 						if((channelMatch&& tagIncluded&& ownerMatch && uriMatch && ( (!name_query.equals("") && resource.name.contains(name_query))|| 
 								(!description_query.equals("") && resource.description.contains(channel_query) )|| 
 								(name_query.equals("")&&description_query.equals(""))))){
-							System.out.println("match");
+//							System.out.println("match");
 							
 							/**put the match results into the MatchResourceSet*/
 							matchResourceSet.add(resource);
@@ -715,7 +715,7 @@ public class ServerHandler {
 						if((channelMatch&& tagIncluded&& ownerMatch && uriMatch && ( (!name_query.equals("") && resource.name.contains(name_query))|| 
 								(!description_query.equals("") && resource.description.contains(channel_query) )|| 
 								(name_query.equals("")&&description_query.equals(""))))){
-							System.out.println("match");
+//							System.out.println("match");
 							
 							/**put the match results into the MatchResourceSet*/
 							matchResourceSet.add(resource);
@@ -888,7 +888,7 @@ public class ServerHandler {
 									if(hasDebugOption){
 										System.out.println("SENT: "+inputQuerry.toJSONString());
 									}
-									System.out.println("query sent to other server");
+//									System.out.println("query sent to other server");
 									StopWatch s = new StopWatch();
 									s.start();
 									while(true){
@@ -1009,7 +1009,7 @@ public class ServerHandler {
 									if(hasDebugOption){
 										System.out.println("SENT: "+inputQuerry.toJSONString());
 									}
-									System.out.println("query sent to other server");
+//									System.out.println("query sent to other server");
 //									StopWatch s = new StopWatch();
 //									s.start();		
 									while(true){
@@ -1020,7 +1020,9 @@ public class ServerHandler {
 											
 											JSONObject otherResponse = new JSONObject();
 											otherResponse = (JSONObject)parser2.parse(otherServerResponse);
-											System.out.println(otherResponse.toJSONString());
+											if(hasDebugOption){
+												System.out.println("RECEIVED: "+otherResponse.toJSONString());
+											}
 											JSONArray  jsonArray = new JSONArray();
 											
 											arrayList.add((JSONObject)parser2.parse(otherServerResponse));

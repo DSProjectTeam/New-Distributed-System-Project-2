@@ -3,6 +3,7 @@ import java.io.DataOutputStream;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.net.InetAddress;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
@@ -109,17 +110,13 @@ public class Client {
 				while(true){
 					//when ENTER detected, send out UNSUBSCRIBE command, then close connection
 					if(enterDetected==true){
-						System.out.println("ENTER detected.");
 						JSONObject unsubscribeMessage = new JSONObject();
 						unsubscribeMessage.put(ConstantEnum.CommandType.command.name(),"UNSUBSCRIBE");
 						unsubscribeMessage.put(ConstantEnum.CommandArgument.id.name(),id);
 						out.writeUTF(unsubscribeMessage.toJSONString());
 						out.flush();
-						System.out.println("Unsubscribe message sent. ID: "+id+" have successfully unsubscribed.");
-//						System.out.println("command sent to server: "+unsubscribeMessage.toJSONString());
 						if(hasDebugOption){
-						    System.out.println("-setting debug on");
-						    System.out.println(commandType+" to "+host+":"+port);
+						    System.out.println("-unsubscribing to "+host+":"+port);
 							System.out.println("SENT: "+unsubscribeMessage.toJSONString());
 						}
 						swatch.start();
@@ -442,9 +439,9 @@ public class Client {
 			JSONParser parser = new JSONParser();
 			JSONObject serverResponse;		
 			serverResponse = (JSONObject)parser.parse(input);
-			//if(hasDebugOption){
+			if(hasDebugOption){
 		       System.out.println("RECEIVED: "+serverResponse.toJSONString());
-			//}
+			}
 			
 			//print response in GSON format. 
 			JsonParser jsonParser = new JsonParser();
@@ -459,19 +456,15 @@ public class Client {
 			case "-share":
 			case "-exchange":
 			case "-query":
-//				System.out.println("response received from server:\n"+show);
 				break;
 			case "-fetch":
-//				System.out.println("response received from server:\n"+show);
 				handleDownload(serverResponse,in);
 				break;
 			case "-subscribe":
-//				System.out.println("response received from server:\n"+show);
 				break;
 			/*commandType remains "", and the pair {"command",""} was put into a JSONObject and sent to server.
 				So here we just print out the error message returned from server. no need to handle empty command case*/
 			default: 
-//				System.out.println("response received from server:\n"+serverResponse.toJSONString());
 				break;
 			}
 
@@ -517,7 +510,7 @@ public class Client {
 						
 						// Variable used to read if there are remaining size left to read.
 						int num;
-						
+						System.out.println("Downloading "+fileName+" of size "+fileSizeRemaining);
 						while((num=in.read(receiveBuffer))>0){
 							// Write the received bytes into the RandomAccessFile
 							downloadingFile.write(Arrays.copyOf(receiveBuffer, num));
@@ -534,6 +527,7 @@ public class Client {
 								break;
 						}
 					}
+					System.out.println("File received!");
 					downloadingFile.close();
 					}
 					
@@ -566,12 +560,7 @@ public class Client {
 	}
 	
 	
-	
-	
-	
-	
-	
-	
+
 	
     /**
      * This method start an individual thread to listen for ENTER. 
@@ -588,15 +577,6 @@ public class Client {
            });
           thread.start();
     }
-	
-	
-	
-	
-	
-	
-	
-	
-	
 	
 	
 	
